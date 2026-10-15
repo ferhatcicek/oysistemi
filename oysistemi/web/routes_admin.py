@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import Response
+from markupsafe import Markup
 from starlette.datastructures import FormData
 
 from ..admin import enrollment
@@ -114,9 +115,13 @@ def totp_page(request: Request, ctx: Context = Depends(get_ctx)):
         raise Redirect("/admin/login")
     admin = ctx.conn.execute("SELECT username FROM admins WHERE id = ?", (sess["aid"],)).fetchone()
     secret = sess.get("enroll")
-    return render(request, "admin/totp.html", enroll=secret,
-                  uri=totp.provisioning_uri(secret, admin["username"]) if secret else None,
-                  err=request.query_params.get("err"))
+    uri = totp.provisioning_uri(secret, admin["username"]) if secret else None
+    # Markup güvenli: SVG'yi segno üretir; içinde yalnızca sayısal çizim yolları ve sabit
+    # başlık vardır, kullanıcıdan gelen hiçbir metin SVG'ye yazılmaz.
+    qr = Markup(totp.qr_svg(uri)) if uri else None  # noqa: S704  # nosec B704
+    return render(request, "admin/totp.html", enroll=secret, uri=uri, qr=qr,
+                  grouped=totp.group(secret) if secret else None,
+                  username=admin["username"], err=request.query_params.get("err"))
 
 
 @router.post("/totp")

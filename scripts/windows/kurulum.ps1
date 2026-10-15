@@ -120,7 +120,7 @@ if ($LASTEXITCODE -ne 0) { Fail "pip güncellenemedi" }
 if ($LASTEXITCODE -ne 0) {
     Fail "bağımlılıklar kurulamadı (yukarıdaki pip çıktısına bakın; internet/proxy erişimini denetleyin)"
 }
-& $VPy -c "import cryptography, argon2, fastapi, uvicorn, jinja2, multipart, zoneinfo, oysistemi; zoneinfo.ZoneInfo('Europe/Istanbul')"
+& $VPy -c "import cryptography, argon2, fastapi, uvicorn, jinja2, multipart, segno, zoneinfo, oysistemi; zoneinfo.ZoneInfo('Europe/Istanbul')"
 if ($LASTEXITCODE -ne 0) { Fail "bağımlılıklar kuruldu ama içe aktarılamıyor" }
 Write-Host "Bağımlılıklar kuruldu ve doğrulandı." -ForegroundColor Green
 

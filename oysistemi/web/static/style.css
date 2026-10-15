@@ -70,3 +70,12 @@ meter { width: 100%; height: 14px; }
   .codes tr { page-break-inside: avoid; }
   body { background: #fff; color: #000; }
 }
+.steps { padding-left: 20px; }
+.steps li { margin: 6px 0; }
+.center { text-align: center; }
+/* Karekod her temada beyaz zeminde: koyu temada da taranabilir. */
+.qr { display: flex; justify-content: center; margin: 16px auto; }
+.qr svg { background: #fff; padding: 8px; border-radius: 8px; max-width: 100%; height: auto;
+          border: 1px solid var(--line); }
+details { margin: 16px 0; }
+details summary { cursor: pointer; color: var(--accent); }

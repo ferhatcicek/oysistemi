@@ -5,6 +5,12 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
 
 ## [Yayımlanmamış]
 
+### Eklenenler
+- Yönetici iki adımlı doğrulama kurulumu **karekodla** yapılıyor. Paneli telefonda açanlar için
+  "uygulamaya ekle" bağlantısı, kamera kullanılamıyorsa 4'erli gruplanmış anahtar ve
+  "Kopyala" düğmesi var. Karekod sayfaya gömülü SVG'dir: sır ayrı bir adresten geçmez, CSP
+  gevşetilmez. Yeni bağımlılık: `segno` (saf Python, bağımlılıksız).
+
 ### Güvenlik
 - **Yeni yönetici ekleme ile iki kişi kuralının aşılması giderildi.** Önceden öneren yönetici
   yeni hesabın parolasını belirliyordu. Onaydan sonra o hesaba girip TOTP'yi kendi cihazına

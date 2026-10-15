@@ -328,3 +328,24 @@ def test_admin_add_requires_both_enrollment_parts(web):
                                          "part_b": part_b, "password": "ikinci-deneme-123",
                                          "password2": "ikinci-deneme-123"}, follow_redirects=False)
     assert "err=" in r.headers["location"]
+
+
+def test_totp_enrollment_page_shows_scannable_qr(web):
+    """İlk giriş karekodu: doğru otpauth adresi, CSP uyumu, elle giriş yedeği."""
+    import segno
+
+    from oysistemi.auth import totp as _totp
+    app, _, _ = web
+    c = TestClient(app, base_url=BASE)
+    c.post("/admin/login", data={"username": "ayse", "password": "parola-ayse-123"},
+           follow_redirects=False)
+    secret = unsign(app.state.keys.session, "admin", c.cookies.get(ADMIN_COOKIE))["enroll"]
+    page = c.get("/admin/totp").text
+    uri = _totp.provisioning_uri(secret, "ayse")
+    # Sayfadaki SVG, bu otpauth adresi için üretilen karekodun birebir aynısı
+    assert _totp.qr_svg(uri) in page
+    assert segno.make(uri, error="m").designator  # geçerli bir karekod
+    svg = page[page.index("<svg"):page.index("</svg>")]
+    assert "<script" not in svg and "style=" not in svg  # CSP: satır içi betik/stil yok
+    assert f'href="{uri.replace("&", "&amp;")}"' in page  # "telefonda aç" bağlantısı
+    assert _totp.group(secret) in page  # elle giriş yedeği (4'erli gruplar)

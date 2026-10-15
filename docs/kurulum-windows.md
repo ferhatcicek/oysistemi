@@ -62,8 +62,9 @@ seçmen adları ve oylar bir daha okunamaz.
 powershell -ExecutionPolicy Bypass -File scripts\windows\baslat.ps1 -VeriKlasoru C:\OySistemi -YerelTest
 ```
 
-http://127.0.0.1:8000/admin adresini açın. İlk girişte telefonunuzdaki kimlik doğrulayıcı
-uygulamayı (Google Authenticator, Microsoft Authenticator, Aegis…) kaydedersiniz.
+http://127.0.0.1:8000/admin adresini açın. İlk girişte ekrandaki **karekodu** telefonunuzdaki
+kimlik doğrulayıcı uygulamayla (Google Authenticator, Microsoft Authenticator, Aegis…)
+taratırsınız.
 `-YerelTest` seçeneği HTTPS olmadan çalışmayı sağlar; **yalnızca bu bilgisayardan denemek
 içindir.**
 

@@ -4,16 +4,37 @@
 <form class="card" method="post" action="/admin/totp">
   <h1>İki adımlı doğrulama</h1>
   {% if enroll %}
-    <div class="flash warn">İlk girişiniz: bir kimlik doğrulayıcı uygulama (Google Authenticator,
-      Aegis, 1Password, Microsoft Authenticator…) kaydetmeniz gerekiyor. Bu adım zorunludur.</div>
-    <p>Uygulamada "kurulum anahtarı ile ekle" seçeneğini kullanın ve şu anahtarı girin:</p>
-    <p class="code">{{ enroll }}</p>
-    <p class="muted">Veya bu bağlantıyı destekleyen bir uygulamaya yapıştırın:</p>
-    <p class="mono">{{ uri }}</p>
-    <p class="muted">Bu anahtar yalnızca size gösterilir; sunucuda şifreli saklanır.</p>
+    <div class="flash warn">İlk girişiniz: telefonunuza bir kimlik doğrulayıcı uygulama kaydetmeniz
+      gerekiyor. Bu adım zorunludur ve yalnızca bir kez yapılır.</div>
+
+    <ol class="steps">
+      <li>Telefonunuzda bir kimlik doğrulayıcı uygulama açın: Google Authenticator,
+        Microsoft Authenticator, Aegis, 1Password, Bitwarden…</li>
+      <li>Uygulamada <strong>＋</strong> / <strong>Hesap ekle</strong> → <strong>Karekod tara</strong>
+        seçeneğine dokunun ve aşağıdaki karekodu kameraya gösterin.</li>
+      <li>Uygulamada <strong>OySistemi ({{ username }})</strong> adıyla görünen 6 haneli kodu aşağıya yazın.</li>
+    </ol>
+
+    <div class="qr" role="img" aria-label="İki adımlı doğrulama karekodu">{{ qr }}</div>
+
+    <p class="center"><a class="btn secondary" href="{{ uri }}">Bu sayfayı telefonda açtıysanız: uygulamaya ekle</a></p>
+
+    <details>
+      <summary>Karekodu tarayamıyor musunuz? Anahtarı elle girin</summary>
+      <p>Uygulamada <strong>Kurulum anahtarı gir</strong> seçeneğini kullanın. Hesap adı:
+        <span class="mono">OySistemi ({{ username }})</span>, tür: <strong>zamana dayalı</strong>.</p>
+      <p class="code" id="totp-key">{{ grouped }}</p>
+      <button type="button" class="secondary" data-copy="{{ enroll }}">Anahtarı kopyala</button>
+      <span class="muted" data-copy-status></span>
+    </details>
+
+    <p class="muted">Karekod ve anahtar yalnızca size, yalnızca şimdi gösterilir; sunucuda şifreli
+      saklanır. Ekran görüntüsünü almayın ve kimseyle paylaşmayın.</p>
   {% endif %}
   <label for="c">Uygulamadaki 6 haneli kod</label>
-  <input id="c" type="text" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+  <input id="c" type="text" name="code" required inputmode="numeric" autocomplete="one-time-code"
+         maxlength="7" pattern="[0-9 ]{6,7}" autofocus>
   <button>{% if enroll %}Kaydet ve giriş yap{% else %}Giriş{% endif %}</button>
 </form>
 {% endblock %}
+{% block scripts %}<script src="/static/admin.js"></script>{% endblock %}

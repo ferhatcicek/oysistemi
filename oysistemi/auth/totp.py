@@ -49,3 +49,21 @@ def match_counter(secret_b32: str, code: str, at: float | None = None,
 def provisioning_uri(secret_b32: str, account: str, issuer: str = "OySistemi") -> str:
     return (f"otpauth://totp/{quote(issuer)}:{quote(account)}?secret={secret_b32}"
             f"&issuer={quote(issuer)}&digits={DIGITS}&period={STEP}")
+
+
+def qr_svg(uri: str) -> str:
+    """Kimlik doğrulayıcı uygulamanın tarayacağı karekod (satır içi SVG).
+
+    Sayfanın içine gömülür: TOTP sırrı ayrı bir resim adresinden geçmez (önbelleğe/loga
+    düşmez) ve CSP gevşetilmez (SVG'de betik ya da style özniteliği yok). Koyu temada da
+    taranabilsin diye zemin her zaman beyazdır.
+    """
+    import segno
+
+    return segno.make(uri, error="m").svg_inline(
+        scale=5, border=4, dark="#000000", light="#ffffff", title="İki adımlı doğrulama karekodu")
+
+
+def group(secret_b32: str) -> str:
+    """Elle girişte okunabilirlik için 4'erli gruplar: ABCD EFGH ..."""
+    return " ".join(secret_b32[i:i + 4] for i in range(0, len(secret_b32), 4))

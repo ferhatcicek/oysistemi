@@ -16,9 +16,14 @@ Bu kılavuz seçim kurulu üyeleri ve sistem yöneticileri içindir.
 ## İlk giriş
 
 1. `https://<adres>/admin` adresinden kullanıcı adı ve parolanızla girin.
-2. Ekranda gösterilen anahtarı telefonunuzdaki kimlik doğrulayıcı uygulamaya ekleyin ve
-   uygulamanın gösterdiği 6 haneli kodu girin. Bu adım bir kez yapılır; sonraki girişlerde
-   yalnızca kod sorulur.
+2. Telefonunuzdaki kimlik doğrulayıcı uygulamada (Google/Microsoft Authenticator, Aegis…)
+   **Hesap ekle → Karekod tara** seçeneğiyle ekrandaki **karekodu** taratın ve uygulamanın
+   gösterdiği 6 haneli kodu girin.
+   - Paneli zaten telefonda açtıysanız **"uygulamaya ekle"** düğmesine dokunun.
+   - Kamera kullanılamıyorsa "Karekodu tarayamıyor musunuz?" bölümündeki anahtarı kopyalayıp
+     elle girin.
+
+   Bu adım bir kez yapılır; sonraki girişlerde yalnızca kod sorulur.
 3. 5 hatalı denemeden sonra hesap 15 dakika kilitlenir.
 
 ## Bir oylamanın adımları
