@@ -272,3 +272,57 @@ def test_admin_lockout(web):
         c.post("/admin/login", data={"username": "mehmet", "password": "yanlis"})
     r = c.post("/admin/login", data={"username": "mehmet", "password": "parola-mehmet-123"})
     assert "kilitlendi" in r.text
+
+
+def test_admin_add_requires_both_enrollment_parts(web):
+    """Regresyon (güvenlik incelemesi): tek bir yönetici yeni yönetici hesabını ele geçiremez.
+
+    Eski akışta öneren parolayı belirliyor, onaydan sonra hesaba girip TOTP'yi kendi telefonuna
+    kaydedebiliyordu (iki kişi kuralının tek kişiyle aşılması).
+    """
+    import re as _re
+    app, ctx, _ = web
+    ayse = admin_client(app, "ayse", "parola-ayse-123")
+    mehmet = admin_client(app, "mehmet", "parola-mehmet-123")
+
+    r = post(ayse, "/admin/admins", {"username": "zeynep", "role": "admin"})
+    part_a = _re.search(r'<p class="code">([^<]+)</p>', r.text).group(1)
+    (rid,) = ctx.conn.execute("SELECT id FROM change_requests WHERE status='pending'").fetchone()
+    # Öneri yükünde A parçasının kendisi yok, yalnızca özeti
+    from oysistemi.admin import governance as _gov
+    payload = _gov.request_payload(ctx, ctx.conn.execute(
+        "SELECT * FROM change_requests WHERE id = ?", (rid,)).fetchone())
+    assert part_a not in str(payload) and payload["enroll_a_hash"].startswith("$argon2")
+
+    r = post(mehmet, f"/admin/requests/{rid}", {"decision": "approve"})
+    part_b = _re.search(r'<p class="code">([^<]+)</p>', r.text).group(1)
+    assert part_a != part_b
+
+    # SALDIRI 1: öneren, yeni hesaba herhangi bir parolayla giremez (hesap parolasız)
+    for guess in ("parola-ayse-123", part_a, ""):
+        x = TestClient(app, base_url=BASE)
+        r = x.post("/admin/login", data={"username": "zeynep", "password": guess or "x"},
+                   follow_redirects=False)
+        assert "totp" not in r.headers.get("location", ""), guess
+
+    # SALDIRI 2: tek parçayla etkinleştirme reddedilir (öneren yalnızca A'yı bilir)
+    anon = TestClient(app, base_url=BASE)
+    r = anon.post("/admin/enroll", data={"username": "zeynep", "part_a": part_a,
+                                         "part_b": part_a, "password": "ele-gecirme-123",
+                                         "password2": "ele-gecirme-123"}, follow_redirects=False)
+    assert "err=" in r.headers["location"]
+
+    # Meşru akış: iki parça + kendi parolası → giriş → kendi TOTP'si
+    r = anon.post("/admin/enroll", data={"username": "zeynep", "part_a": part_a.upper(),
+                                         "part_b": part_b, "password": "zeynep-kendi-parolasi",
+                                         "password2": "zeynep-kendi-parolasi"},
+                  follow_redirects=False)
+    assert r.headers["location"].startswith("/admin/login")
+    zeynep = admin_client(app, "zeynep", "zeynep-kendi-parolasi")
+    assert zeynep.get("/admin").status_code == 200
+
+    # Aynı kodlar ikinci kez kullanılamaz
+    r = anon.post("/admin/enroll", data={"username": "zeynep", "part_a": part_a,
+                                         "part_b": part_b, "password": "ikinci-deneme-123",
+                                         "password2": "ikinci-deneme-123"}, follow_redirects=False)
+    assert "err=" in r.headers["location"]

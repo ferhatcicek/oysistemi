@@ -29,9 +29,11 @@ def test_bootstrap_only_once_and_needs_two(ctx):
         gov.bootstrap_admins(ctx, [("x", "x", "p"), ("y", "y", "p")])
 
 
-def test_plain_password_rejected_for_admin_add(ctx):
-    with pytest.raises(gov.GovernanceError, match="argon2"):
-        gov.propose(ctx, "a1", "admin_add", {"id": "a3", "username": "u", "pw_hash": "secret"})
+def test_proposer_cannot_set_new_admin_credentials(ctx):
+    """Regresyon (güvenlik incelemesi): öneren, yeni hesabın parolasını belirleyememeli."""
+    with pytest.raises(gov.GovernanceError, match="credentials are set by the new admin"):
+        gov.propose(ctx, "a1", "admin_add", {"id": "a3", "username": "u",
+                                             "pw_hash": gov.hash_password("x" * 12)})
 
 
 def test_config_frozen_after_open(ctx, open_election):
@@ -59,3 +61,16 @@ def test_invalid_config_rejected(ctx):
     with pytest.raises(ConfigError):
         service.create_election(ctx, "a1", "e3", "X", "single",
                                 {"ballot": {"options": ["a"]}, "closes_at": at(3600)})
+
+
+def test_enrollment_code_expires_by_trusted_clock(ctx, clock):
+    from oysistemi.admin import enrollment
+    part_a = enrollment.new_part()
+    rid = gov.propose(ctx, "a1", "admin_add", {"id": "z", "username": "z", "role": "admin",
+                                               "enroll_a_hash": enrollment.hash_part(part_a)})
+    gov.decide(ctx, "a2", rid, "approve")
+    part_b = ctx.outputs.pop("enroll_b")["part"]
+    clock.system_offset = -30 * 86400  # sistem saatini geri almak süreyi uzatmaz
+    clock.advance(8 * 86400)
+    with pytest.raises(enrollment.EnrollmentError, match="expired"):
+        enrollment.complete(ctx, "z", part_a, part_b, "yeterince-uzun-parola")

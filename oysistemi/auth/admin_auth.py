@@ -52,9 +52,11 @@ def check_password(ctx: Context, username: str, password: str) -> dict[str, Any]
     if _locked(username):
         raise AdminAuthError("too many failed attempts; try again later")
     row = ctx.conn.execute("SELECT * FROM admins WHERE username = ?", (username,)).fetchone()
+    # Etkinleştirilmemiş hesap parolayla giremez (önce iki parçalı kayıt belirteci gerekir).
+    usable = row is not None and not row["pw_hash"].startswith("enroll:")
     try:
-        _ph.verify(row["pw_hash"] if row else _DUMMY, password)
-        ok = row is not None
+        _ph.verify(row["pw_hash"] if usable else _DUMMY, password)
+        ok = usable
     except VerificationError:
         ok = False
     if not ok:

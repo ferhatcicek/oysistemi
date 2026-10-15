@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Etkinleştirme kodu {{ part_name }}{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Etkinleştirme kodu — {{ part_name }} parçası</h1>
+  <div class="flash warn">Bu kod <strong>yalnızca şimdi ve yalnızca size</strong> gösteriliyor.
+    Sunucuda yalnızca özeti saklanır; bir daha görüntülenemez.</div>
+  <p>Yeni yönetici: <strong class="mono">{{ username }}</strong></p>
+  <p class="code">{{ part }}</p>
+  <p>Bu kodu <strong>{{ username }}</strong> kullanıcısına güvenli bir kanaldan (yüz yüze, kapalı
+    zarf ya da şifreli mesaj) iletin.
+    {% if part_name == 'A' %}Diğer parça (B), öneriyi onaylayan yöneticiye gösterilecek.
+    {% else %}Diğer parça (A), öneriyi yapan yöneticide.{% endif %}
+    Yeni yönetici iki parçayla birlikte <span class="mono">/admin/enroll</span> sayfasında kendi
+    parolasını belirler. Kod 7 gün geçerlidir.</p>
+  <p class="muted">Güvenlik gereği iki parçayı birden kimse görmez: böylece hiçbir yönetici yeni
+    hesabı tek başına ele geçiremez.</p>
+  <p><a class="btn" href="/admin/admins">Tamam, kodu ilettim/not ettim</a></p>
+</div>
+{% endblock %}

@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 from .config import Keys, Settings
 from .db import connection
@@ -18,6 +19,8 @@ class Context:
     conn: sqlite3.Connection
     keys: Keys
     settings: Settings
+    # Bir işlemin YALNIZCA çağırana bir kez gösterilecek çıktıları (ör. kayıt belirteci B parçası)
+    outputs: dict[str, Any] = field(default_factory=dict)
 
     def close(self) -> None:
         self.conn.close()

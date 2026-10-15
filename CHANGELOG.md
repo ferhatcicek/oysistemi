@@ -5,6 +5,13 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
 
 ## [Yayımlanmamış]
 
+### Güvenlik
+- **Yeni yönetici ekleme ile iki kişi kuralının aşılması giderildi.** Önceden öneren yönetici
+  yeni hesabın parolasını belirliyordu. Onaydan sonra o hesaba girip TOTP'yi kendi cihazına
+  kaydederek tek başına iki yönetici hesabını kontrol edebilirdi. Artık hesap iki parçalı bir
+  kayıt belirteciyle (A: önerene, B: onaylayana) yeni yöneticinin kendisi tarafından
+  etkinleştirilir; etkinleştirilmemiş hesap giriş yapamaz.
+
 ## [0.1.0] - 2026-10-15
 
 İlk yayım.

@@ -20,6 +20,7 @@ from ..context import Context
 from ..crypto import fieldenc, rowmac
 from ..db.connection import IntegrityError, insert_row, transaction, update_row
 from ..elections import service as elections
+from . import enrollment
 
 _ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 _EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,255}\.[^@\s]{2,}$")
@@ -102,12 +103,22 @@ def _roll_remove(ctx: Context, p: dict[str, Any]) -> None:
             raise GovernanceError(f"voter {vid} is not on the roll")
 
 
-def _admin_add(ctx: Context, p: dict[str, Any]) -> None:
+def _insert_admin(ctx: Context, admin_id: str, username: str, pw_hash: str,
+                  role: str = "admin") -> None:
     insert_row(ctx.conn, ctx.keys.row_mac, "admins", {
-        "id": p["id"], "username": p["username"], "pw_hash": p["pw_hash"],
+        "id": admin_id, "username": username, "pw_hash": pw_hash,
         # TOTP ilk girişte kaydedilir; None "parola" değil (bandit yanlış pozitif)
         "totp_secret_enc": None,  # nosec B105
-        "role": p.get("role", "admin"), "created_at": chain.now()})
+        "role": role, "created_at": chain.now()})
+
+
+def _admin_add(ctx: Context, p: dict[str, Any]) -> None:
+    """Hesap parolasız oluşturulur; B parçası yalnızca onaylayana döner (bkz. enrollment.py)."""
+    part_b = enrollment.new_part()
+    _insert_admin(ctx, p["id"], p["username"],
+                  enrollment.pending_marker(p["enroll_a_hash"], enrollment.hash_part(part_b)),
+                  p.get("role", "admin"))
+    ctx.outputs["enroll_b"] = {"username": p["username"], "part": part_b}
 
 
 def _election_open(ctx: Context, p: dict[str, Any]) -> None:
@@ -140,12 +151,17 @@ def _validate(kind: str, p: dict[str, Any]) -> dict[str, Any]:
         for v in ids:
             _check_id(v, "voter id")
     elif kind == "admin_add":
+        # Öneren yeni hesabın kimlik bilgisini BELİRLEYEMEZ (parola, TOTP): yalnızca kayıt
+        # belirtecinin A parçasının özeti kabul edilir.
+        if set(p) - {"id", "username", "role", "enroll_a_hash"}:
+            raise GovernanceError("admin_add accepts only id, username, role, enroll_a_hash; "
+                                  "credentials are set by the new admin")
         _check_id(p.get("id"), "admin id")
         _check_id(p.get("username"), "username")
         if p.get("role", "admin") not in ("admin", "auditor"):
             raise GovernanceError("invalid role")
-        if not str(p.get("pw_hash", "")).startswith("$argon2"):
-            raise GovernanceError("pw_hash must be an argon2 hash (never a plain password)")
+        if not str(p.get("enroll_a_hash", "")).startswith("$argon2"):
+            raise GovernanceError("enroll_a_hash must be an argon2 hash")
     elif kind in ("election_open", "election_close"):
         _check_id(p.get("election_id"), "election id")
     return p
@@ -265,6 +281,5 @@ def bootstrap_admins(ctx: Context, admins: list[tuple[str, str, str]]) -> None:
         for admin_id, username, password in admins:
             _check_id(admin_id, "admin id")
             _check_id(username, "username")
-            _admin_add(ctx, {"id": admin_id, "username": username,
-                             "pw_hash": hash_password(password)})
+            _insert_admin(ctx, admin_id, username, hash_password(password))
     checkpoint.take(ctx.conn, ctx.keys.checkpoint, ctx.settings.checkpoint_path)

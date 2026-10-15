@@ -7,7 +7,7 @@
     <tr><th>Kullanıcı</th><th>Rol</th><th>İki adımlı doğrulama</th><th>Oluşturulma</th></tr>
     {% for a in admins %}
     <tr><td>{{ a.username }}</td><td>{{ 'Yönetici' if a.role == 'admin' else 'Denetçi (salt okunur)' }}</td>
-        <td>{{ 'Kurulu' if a.has_totp else 'İlk girişte kurulacak' }}</td><td>{{ a.created_at }}</td></tr>
+        <td>{% if a.pending %}Etkinleştirme bekliyor{% elif a.has_totp %}Kurulu{% else %}İlk girişte kurulacak{% endif %}</td><td>{{ a.created_at }}</td></tr>
     {% endfor %}
   </table>
 </div>
@@ -16,15 +16,16 @@
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <label for="u">Kullanıcı adı</label>
   <input id="u" type="text" name="username" required pattern="[A-Za-z0-9._\-]{1,64}">
-  <label for="p">Geçici parola (en az 12 karakter)</label>
-  <input id="p" type="password" name="password" required minlength="12" autocomplete="new-password">
   <label for="r">Rol</label>
   <select id="r" name="role">
     <option value="admin">Yönetici</option>
     <option value="auditor">Denetçi (yalnızca görüntüler)</option>
   </select>
   <button>Öner</button>
-  <p class="muted">Parola tarayıcıdan sunucuya gelir gelmez argon2id ile hash'lenir; öneride
-    yalnızca hash saklanır. Yeni yönetici ilk girişte kendi iki adımlı doğrulamasını kurar.</p>
+  <p class="muted">Yeni yöneticinin parolasını siz belirlemezsiniz. Öneri sonrası size bir
+    <strong>A kodu</strong>, onaylayan yöneticiye bir <strong>B kodu</strong> gösterilir. Yeni yönetici iki
+    kodu da alıp <a href="/admin/enroll">/admin/enroll</a> sayfasında kendi parolasını belirler,
+    ardından kendi iki adımlı doğrulamasını kurar. Böylece hiçbir yönetici yeni hesabı tek başına
+    ele geçiremez.</p>
 </form>
 {% endblock %}

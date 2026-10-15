@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import Response
 from starlette.datastructures import FormData
 
+from ..admin import enrollment
 from ..admin import governance as gov
 from ..audit import chain, checkpoint, verifier
 from ..auth import admin_auth, totp, voter_auth
@@ -22,8 +23,8 @@ from .security import ADMIN_COOKIE, ADMIN_TTL, new_csrf, set_cookie, sign, unsig
 
 router = APIRouter(prefix="/admin")
 
-DOMAIN_ERRORS = (gov.GovernanceError, service.ElectionStateError, ConfigError,
-                 voter_auth.VoterAuthError, admin_auth.AdminAuthError, LookupError)
+DOMAIN_ERRORS = (gov.GovernanceError, enrollment.EnrollmentError, service.ElectionStateError,
+                 ConfigError, voter_auth.VoterAuthError, admin_auth.AdminAuthError, LookupError)
 
 BALLOT_LABELS = {
     "single": "Tek seçim", "yes_no": "Evet / Hayır / Çekimser", "multi": "Çoklu seçim",
@@ -188,6 +189,10 @@ async def decide(request: Request, request_id: str, ctx: Context = Depends(get_c
         status = gov.decide(ctx, admin["id"], request_id, str(form.get("decision")))
     except DOMAIN_ERRORS as exc:
         raise _go("/admin", err=f"İşlem uygulanamadı: {exc}") from None
+    if "enroll_b" in ctx.outputs:  # yalnızca bu onaylayana, bir kez
+        out = ctx.outputs.pop("enroll_b")
+        return _page(request, "admin/enroll_part.html", admin, sess, part_name="B",
+                     username=out["username"], part=out["part"])
     text = {"applied": "Onaylandı ve uygulandı.", "rejected": "Öneri reddedildi.",
             "pending": "Onayınız kaydedildi; başka onay bekleniyor."}[status]
     raise _go("/admin", msg=text)
@@ -253,7 +258,8 @@ async def voter_disable(request: Request, voter_id: str, ctx: Context = Depends(
 def admins(request: Request, ctx: Context = Depends(get_ctx)):
     admin, sess = _admin(request, ctx)
     rows = ctx.conn.execute("SELECT id, username, role, created_at, totp_secret_enc IS NOT NULL "
-                            "AS has_totp FROM admins ORDER BY created_at").fetchall()
+                            "AS has_totp, pw_hash LIKE 'enroll:%' AS pending FROM admins "
+                            "ORDER BY created_at").fetchall()
     return _page(request, "admin/admins.html", admin, sess, admins=rows)
 
 
@@ -261,14 +267,41 @@ def admins(request: Request, ctx: Context = Depends(get_ctx)):
 async def admin_add(request: Request, ctx: Context = Depends(get_ctx)):
     admin, sess = _admin(request, ctx)
     form = await _form(request, sess)
-    password = str(form.get("password", ""))
-    if len(password) < 12:
-        raise _go("/admin/admins", err="Parola en az 12 karakter olmalı.")
-    payload = {"id": str(form.get("username", "")).strip(),
-               "username": str(form.get("username", "")).strip(),
-               "role": str(form.get("role", "admin")),
-               "pw_hash": gov.hash_password(password)}
-    raise _propose(ctx, admin, "admin_add", payload, "/admin/admins")
+    username = str(form.get("username", "")).strip()
+    part_a = enrollment.new_part()
+    payload = {"id": username, "username": username, "role": str(form.get("role", "admin")),
+               "enroll_a_hash": enrollment.hash_part(part_a)}
+    try:
+        gov.propose(ctx, admin["id"], "admin_add", payload)
+    except DOMAIN_ERRORS as exc:
+        raise _go("/admin/admins", err=f"Öneri oluşturulamadı: {exc}") from None
+    # A parçası yalnızca önerene, bir kez gösterilir; sunucuda yalnızca özeti var.
+    return _page(request, "admin/enroll_part.html", admin, sess, part_name="A",
+                 username=username, part=part_a)
+
+
+@router.get("/enroll")
+def enroll_page(request: Request):
+    return render(request, "admin/enroll.html", err=request.query_params.get("err"))
+
+
+@router.post("/enroll")
+def enroll(request: Request, username: str = Form(...), part_a: str = Form(...),
+           part_b: str = Form(...), password: str = Form(...), password2: str = Form(...),
+           ctx: Context = Depends(get_ctx)):
+    if not request.app.state.limiter.allow(f"admin-enroll:{request.client.host}", 10, 600):
+        raise _go("/admin/enroll", err="Çok fazla deneme. Biraz sonra tekrar deneyin.")
+    if password != password2:
+        raise _go("/admin/enroll", err="Parolalar eşleşmiyor.")
+    try:
+        enrollment.complete(ctx, username.strip(), part_a, part_b, password)
+    except enrollment.EnrollmentError as exc:
+        msg = ("Parola en az 12 karakter olmalı." if "at least" in str(exc) else
+               "Etkinleştirme kodunun süresi dolmuş; yöneticiler yeniden önermeli."
+               if "expired" in str(exc) else "Kullanıcı adı veya etkinleştirme kodları hatalı.")
+        raise _go("/admin/enroll", err=msg) from None
+    raise _go("/admin/login", err=None, msg="Hesabınız etkinleştirildi. Şimdi giriş yapıp "
+                                            "iki adımlı doğrulamayı kurun.")
 
 
 # ───────────────────────── Oylamalar ─────────────────────────

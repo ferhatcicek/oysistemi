@@ -102,6 +102,10 @@ Ana anahtardan HKDF-SHA256 ile türetilen alt anahtarlar (`oysistemi/rowmac`, `a
 
 ### Kimlik doğrulama
 
+- **Yeni yönetici:** Hesap parolasız oluşturulur ve iki parçalı kayıt belirteciyle sahibi
+  tarafından etkinleştirilir. A parçası yalnızca önerene, B parçası yalnızca onaylayana bir kez
+  gösterilir (`admin/enrollment.py`). Öneren kimlik bilgisi belirleyemez; aksi halde onaydan
+  sonra hesaba girip TOTP'yi kendine kaydederek tek başına iki hesabı kontrol edebilirdi.
 - **Yönetici:** argon2id parola ve **zorunlu** TOTP. TOTP sırrı AES-GCM ile şifrelidir ve aynı
   kod tekrar kullanılamaz. 5 hatadan sonra 15 dakika kilit. Oturum çerezi HMAC ile imzalıdır,
   `HttpOnly`, `SameSite=Strict`, `Secure`.

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Yönetici hesabını etkinleştir{% endblock %}
+{% block content %}
+<form class="card" method="post" action="/admin/enroll">
+  <h1>Yönetici hesabını etkinleştir</h1>
+  <p class="muted">İki yöneticiden aldığınız A ve B kodlarını girin ve <strong>kendi</strong>
+    parolanızı belirleyin. Sonra giriş yapıp kendi iki adımlı doğrulamanızı kuracaksınız.</p>
+  <label for="u">Kullanıcı adı</label>
+  <input id="u" type="text" name="username" required autocomplete="username">
+  <div class="grid">
+    <div><label for="a">A kodu</label>
+      <input id="a" type="text" name="part_a" required class="mono" autocomplete="off"></div>
+    <div><label for="b">B kodu</label>
+      <input id="b" type="text" name="part_b" required class="mono" autocomplete="off"></div>
+  </div>
+  <label for="p">Yeni parola (en az 12 karakter)</label>
+  <input id="p" type="password" name="password" required minlength="12" autocomplete="new-password">
+  <label for="p2">Yeni parola (tekrar)</label>
+  <input id="p2" type="password" name="password2" required minlength="12" autocomplete="new-password">
+  <button>Etkinleştir</button>
+</form>
+{% endblock %}

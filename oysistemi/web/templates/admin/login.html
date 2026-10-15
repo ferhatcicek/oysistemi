@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Yönetici girişi{% endblock %}
 {% block content %}
+{% if request.query_params.get('msg') %}<div class="flash ok">{{ request.query_params.get('msg') }}</div>{% endif %}
 <form class="card" method="post" action="/admin/login">
   <h1>Yönetici girişi</h1>
   <label for="u">Kullanıcı adı</label>
@@ -9,5 +10,6 @@
   <input id="p" type="password" name="password" required autocomplete="current-password">
   <button>Devam</button>
   <p class="muted">Sonraki adımda kimlik doğrulayıcı uygulamanızdaki 6 haneli kod istenecek.</p>
+  <p class="muted">Yeni yönetici misiniz? <a href="/admin/enroll">Hesabınızı etkinleştirin</a>.</p>
 </form>
 {% endblock %}

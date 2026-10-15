@@ -111,7 +111,19 @@ oy hakkı aldı. Bu kaydın oyların içeriğiyle hiçbir bağı yoktur.
 
 ## Yeni yönetici ve denetçi
 
-**Yöneticiler** sayfasından öneri yapılır, ikinci bir yönetici onaylar. Rol olarak
-"Denetçi" seçilirse hesap her şeyi görebilir ama hiçbir değişiklik öneremez veya onaylayamaz;
-bağımsız gözlemciler için uygundur. Yeni hesap ilk girişte kendi kimlik doğrulayıcı
-uygulamasını kaydeder.
+Yeni yöneticinin parolasını **hiçbir yönetici belirlemez**. Yeni hesap iki parçalı bir kodla,
+sahibi tarafından etkinleştirilir:
+
+1. Bir yönetici **Yöneticiler** sayfasından kullanıcı adını ve rolü önerir. Ekranda bir kez
+   **A kodu** gösterilir.
+2. İkinci bir yönetici öneriyi onaylar. Ekranda bir kez **B kodu** gösterilir.
+3. İki yönetici kodlarını yeni kişiye **ayrı ayrı** ve güvenli bir kanaldan iletir.
+4. Yeni yönetici `/admin/enroll` sayfasında iki kodu girip **kendi** parolasını belirler,
+   ardından giriş yapıp kendi kimlik doğrulayıcı uygulamasını kaydeder.
+
+Kodlar 7 gün geçerlidir. İki parçayı birden kimse görmediği için hiçbir yönetici yeni hesabı
+tek başına ele geçirip iki kişi kuralını aşamaz. Etkinleştirilmemiş hesap parolayla giriş
+yapamaz.
+
+Rol olarak "Denetçi" seçilirse hesap her şeyi görebilir ama hiçbir değişiklik öneremez veya
+onaylayamaz; bağımsız gözlemciler için uygundur.
