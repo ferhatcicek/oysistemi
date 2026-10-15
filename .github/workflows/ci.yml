@@ -23,7 +23,7 @@ jobs:
         os: [windows-latest, ubuntu-latest]
         python: ["3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
@@ -42,7 +42,7 @@ jobs:
     name: Windows kurulum betiği (PowerShell 5.1)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Kullanıcı bilgisayarlarında görülen durum: free-threaded (GIL'siz) 3.13t kurulu.
       - uses: actions/setup-python@v5
         id: ft
@@ -76,7 +76,7 @@ jobs:
     name: Statik analiz ve bağımlılık denetimi
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
