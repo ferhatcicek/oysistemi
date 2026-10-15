@@ -18,6 +18,13 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
   gösterir.
 
 ### Düzeltilenler
+- Windows kurulumu: `py -3` bazı bilgisayarlarda deneysel free-threaded Python 3.13t'yi
+  seçiyordu. Bu yapı için `cryptography`/`cffi` paketi olmadığından kurulum başarısız
+  oluyordu. Betik artık uygun Python'u açıkça seçiyor (free-threaded ve 32 bit yapıları
+  atlıyor), uygun olmayan eski `.venv`'i yeniden kuruyor ve pip başarısız olursa duruyor;
+  önceden "Bağımlılıklar kuruldu" yazıp yanıltıcı bir `No module named 'argon2'` hatasıyla
+  devam ediyordu. Yeni seçenekler: `-Python`, `-KurtarmaParolasiDegiskeni`,
+  `-YoneticiKurulumunuAtla`. Betik artık CI'da Windows PowerShell 5.1 ile test ediliyor.
 - Windows: Program PowerShell 7 (pwsh) içinden başlatıldığında izin denetimi
   (`verify`/`harden`) Windows PowerShell 5.1'in `Get-Acl` modülünü yükleyemiyor ve yanlış
   "kritik bulgu" veriyordu. `PSModulePath` artık alt sürece aktarılmıyor.

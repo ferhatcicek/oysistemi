@@ -38,6 +38,40 @@ jobs:
         env:
           PYTHONUTF8: "1"
 
+  windows-kurulum:
+    name: Windows kurulum betiği (PowerShell 5.1)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Kullanıcı bilgisayarlarında görülen durum: free-threaded (GIL'siz) 3.13t kurulu.
+      - uses: actions/setup-python@v5
+        id: ft
+        with:
+          python-version: "3.13t"
+      - name: Free-threaded Python açık bir hatayla reddedilmeli
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\kurulum.ps1 `
+            -VeriKlasoru "$env:RUNNER_TEMP\oys-ft" -Python "${{ steps.ft.outputs.python-path }}" `
+            -YoneticiKurulumunuAtla
+          if ($LASTEXITCODE -ne 1) { Write-Error "free-threaded Python reddedilmedi"; exit 1 }
+          exit 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: kurulum.ps1 uçtan uca
+        shell: powershell
+        env:
+          OYS_CI_REC: "ci-kurtarma-parolasi-123"
+          OYS_TIME_MODE: system  # CI çalıştırıcılarında UDP 123 kapalı olabilir
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\kurulum.ps1 `
+            -VeriKlasoru "$env:RUNNER_TEMP\oys" -KurtarmaParolasiDegiskeni OYS_CI_REC `
+            -YoneticiKurulumunuAtla
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          .\.venv\Scripts\python.exe -m oysistemi.cli --home "$env:RUNNER_TEMP\oys" key status
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
   lint:
     name: Statik analiz ve bağımlılık denetimi
     runs-on: ubuntu-latest

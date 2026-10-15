@@ -5,8 +5,10 @@ sunucusu, servis aracı) gerektirmeden çalışır.
 
 ## Gereksinimler
 
-- [Python 3.12 veya üstü](https://www.python.org/downloads/windows/). Kurulumda **"Add python.exe
-  to PATH"** seçeneğini işaretleyin.
+- [Python 3.12 veya üstü](https://www.python.org/downloads/windows/), **64 bit, standart sürüm**.
+  Kurulumda **"Add python.exe to PATH"** seçeneğini işaretleyin. Deneysel *free-threaded*
+  ("3.13t", GIL'siz) yapı desteklenmez; kurulum betiği onu otomatik olarak atlar. Yalnızca o
+  kuruluysa durur ve uyarır.
 - [Git](https://git-scm.com/download/win), yalnızca depoyu klonlamak için.
 - İnternete açılacaksa bir alan adı ve [Caddy](https://caddyserver.com/download) (HTTPS için).
 - **NTP sunucularına (UDP 123) çıkış izni.** Kapalıysa [zaman ayarları](#internetsiz-kurulum)
@@ -30,7 +32,10 @@ powershell -ExecutionPolicy Bypass -File scripts\windows\kurulum.ps1 -VeriKlasor
 
 Betiğin yaptıkları:
 
-1. Python sürümünü denetler, `.venv` sanal ortamını ve bağımlılıkları kurar (`tzdata` dahil).
+1. Uygun Python'u seçer (`py -3.14/-3.13/-3.12`, sonra `python`; free-threaded ve 32 bit yapıları
+   atlar). Belirli bir Python için `-Python C:\yol\python.exe` verebilirsiniz. Ardından `.venv`
+   sanal ortamını kurar; önceki denemeden kalmış uygun olmayan bir `.venv` varsa yeniden
+   oluşturur. Bağımlılıkları kurup içe aktararak doğrular.
 2. `C:\OySistemi\{data,secrets,checkpoints,outbox}` klasörlerini oluşturur. Devralınan izinleri
    keser; yalnızca bu hesaba ve SYSTEM'e yetki verir.
 3. DPAPI korumalı ana anahtarı üretir.
@@ -150,6 +155,7 @@ ile yeniden korur.
 | Belirti | Neden / çözüm |
 |---|---|
 | `DPAPI could not decrypt the master key` | Sunucu kurulumu yapan hesaptan farklı bir hesapla çalışıyor. Görevi doğru hesapla yeniden kaydedin ya da `key recover` kullanın. |
+| `CFFI does not support the free-threaded build` / `Failed to build 'cryptography'` | Eski kurulum betiği `py -3` ile free-threaded 3.13t'yi seçmiş. `git pull` yapıp betiği yeniden çalıştırın; betik doğru Python'u seçer ve `.venv`'i yeniden kurar. |
 | `ZoneInfoNotFoundError` | `tzdata` eksik: `.venv\Scripts\python -m pip install -e .` |
 | Yönetici panelinde "Saat dış kaynaklarla doğrulanamadı" | UDP 123 kapalı. [İnternetsiz kurulum](#internetsiz-kurulum) bölümüne bakın. |
 | `database is locked` | Antivirüs veri klasörünü tarıyor olabilir. `C:\OySistemi\data` klasörünü gerçek zamanlı taramadan hariç tutun. |
