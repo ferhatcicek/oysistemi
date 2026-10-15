@@ -157,6 +157,7 @@ ile yeniden korur.
 |---|---|
 | `DPAPI could not decrypt the master key` | Sunucu kurulumu yapan hesaptan farklı bir hesapla çalışıyor. Görevi doğru hesapla yeniden kaydedin ya da `key recover` kullanın. |
 | `CFFI does not support the free-threaded build` / `Failed to build 'cryptography'` | Eski kurulum betiği `py -3` ile free-threaded 3.13t'yi seçmiş. `git pull` yapıp betiği yeniden çalıştırın; betik doğru Python'u seçer ve `.venv`'i yeniden kurar. |
+| Betik tekrar çalıştırıldı, yönetici parolaları hatırlanmıyor | Betik var olan yöneticileri değiştirmez; geçerli parolalar ilk kurulumda belirlenenlerdir. Henüz oylama yoksa en temiz yol, veri klasörünü silip kurulumu baştan yapmaktır. Durumu görmek için: `.venv\Scripts\python -m oysistemi.cli --home C:\OySistemi status` |
 | `ZoneInfoNotFoundError` | `tzdata` eksik: `.venv\Scripts\python -m pip install -e .` |
 | Yönetici panelinde "Saat dış kaynaklarla doğrulanamadı" | UDP 123 kapalı. [İnternetsiz kurulum](#internetsiz-kurulum) bölümüne bakın. |
 | `database is locked` | Antivirüs veri klasörünü tarıyor olabilir. `C:\OySistemi\data` klasörünü gerçek zamanlı taramadan hariç tutun. |

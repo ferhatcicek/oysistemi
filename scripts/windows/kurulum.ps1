@@ -124,8 +124,20 @@ if ($LASTEXITCODE -ne 0) {
 if ($LASTEXITCODE -ne 0) { Fail "bağımlılıklar kuruldu ama içe aktarılamıyor" }
 Write-Host "Bağımlılıklar kuruldu ve doğrulandı." -ForegroundColor Green
 
+function Get-Durum {
+    $json = & $VPy -m oysistemi.cli --home $VeriKlasoru status --json
+    if ($LASTEXITCODE -ne 0) { Fail "kurulum durumu okunamadı" }
+    return ($json | Out-String | ConvertFrom-Json)
+}
+
 # ─── 4) Kurulum: klasör izinleri, DPAPI korumalı anahtar + kurtarma anahtarı ─────────────
+# Betik tekrar çalıştırılabilir: var olan kurulum korunur, yalnızca eksik adımlar yapılır.
 if (Test-Path (Join-Path $VeriKlasoru "secrets\master.key")) {
+    $durum = Get-Durum
+    if (-not $durum.key_opens) {
+        Fail ("Mevcut kurulumun ana anahtarı bu Windows hesabında açılmıyor ($($durum.key_error)). " +
+              "Kurulumu yapan hesapla çalıştırın ya da 'oysistemi key recover' kullanın.")
+    }
     Write-Host "Mevcut kurulum bulundu; init atlandı." -ForegroundColor Yellow
 } else {
     $initArgs = @("-m", "oysistemi.cli", "--home", $VeriKlasoru, "init")
@@ -137,7 +149,11 @@ if (Test-Path (Join-Path $VeriKlasoru "secrets\master.key")) {
 }
 
 # ─── 5) İlk yöneticiler (en az iki kişi) ─────────────────────────────────────────────────
-if (-not $YoneticiKurulumunuAtla) {
+$mevcut = @((Get-Durum).admins | ForEach-Object { $_.username })
+if ($mevcut.Count -gt 0) {
+    Write-Host "Yöneticiler zaten var: $($mevcut -join ', ') — bu adım atlandı." -ForegroundColor Yellow
+    Write-Host "  (Parolalar ilk kurulumda belirlenenlerdir. Yeni yönetici: panel → Yöneticiler.)"
+} elseif (-not $YoneticiKurulumunuAtla) {
     if ($Yoneticiler.Count -lt 2) {
         $girdi = Read-Host "İlk yönetici kullanıcı adları (virgülle, en az 2; atlamak için boş)"
         if ($girdi) { $Yoneticiler = $girdi.Split(",") | ForEach-Object { $_.Trim() } }
@@ -155,6 +171,8 @@ if ($LASTEXITCODE -ne 0) { Fail "klasör izinleri kilitlenemedi" }
 & $VPy -m oysistemi.cli --home $VeriKlasoru verify
 if ($LASTEXITCODE -ne 0) { Fail "bütünlük denetiminde kritik bulgu var" }
 
+Write-Host ""
+& $VPy -m oysistemi.cli --home $VeriKlasoru status
 Write-Host ""
 Write-Host "== Kurulum tamam. Sonraki adımlar ==" -ForegroundColor Cyan
 Write-Host "1. $VeriKlasoru\secrets\KURTARMA_ANAHTARI.oyskey dosyasını USB belleğe kopyalayın,"

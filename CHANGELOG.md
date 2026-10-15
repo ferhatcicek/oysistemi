@@ -6,6 +6,8 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
 ## [Yayımlanmamış]
 
 ### Eklenenler
+- `oysistemi status [--json]`: kurulum durumu (anahtarın bu hesapta açılıp açılmadığı,
+  yöneticiler ve iki adımlı doğrulama durumları, oylama sayıları). Şifreli verilere dokunmaz.
 - Yönetici iki adımlı doğrulama kurulumu **karekodla** yapılıyor. Paneli telefonda açanlar için
   "uygulamaya ekle" bağlantısı, kamera kullanılamıyorsa 4'erli gruplanmış anahtar ve
   "Kopyala" düğmesi var. Karekod sayfaya gömülü SVG'dir: sır ayrı bir adresten geçmez, CSP
@@ -24,6 +26,13 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
   gösterir.
 
 ### Düzeltilenler
+- Kurulum betiği tekrar çalıştırıldığında yöneticileri yeniden soruyor, parolaları aldıktan
+  sonra "admins already exist" iz kaydıyla duruyordu. Betik artık tekrar çalıştırılabilir:
+  var olan yöneticileri gösterip atlar, anahtarın bu hesapta açıldığını denetler ve sonda
+  kurulum özetini verir.
+- CLI: `bootstrap-admins` ve `restore` gibi komutlar ön koşulları **parola sormadan önce**
+  denetliyor. Kullanıcı hataları iz kaydı yerine `HATA: ...` mesajıyla gösteriliyor.
+  İlk yönetici parolaları iki kez soruluyor.
 - Windows kurulumu: `py -3` bazı bilgisayarlarda deneysel free-threaded Python 3.13t'yi
   seçiyordu. Bu yapı için `cryptography`/`cffi` paketi olmadığından kurulum başarısız
   oluyordu. Betik artık uygun Python'u açıkça seçiyor (free-threaded ve 32 bit yapıları

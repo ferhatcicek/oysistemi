@@ -71,6 +71,18 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit 1 }
           .\.venv\Scripts\python.exe -m oysistemi.cli --home "$env:RUNNER_TEMP\oys" key status
           if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: kurulum.ps1 ikinci kez — soru sormadan tamamlanmalı
+        shell: powershell
+        env:
+          OYS_TIME_MODE: system
+        run: |
+          # Kullanıcı senaryosu: yöneticiler ilk çalıştırmada oluşturuldu, betik tekrar çalıştırılıyor.
+          .\.venv\Scripts\python.exe -c "from pathlib import Path; from oysistemi.config import Settings; from oysistemi.context import open_context; from oysistemi.admin import governance as g; c=open_context(Settings.from_env(Path(r'$env:RUNNER_TEMP\oys'))); g.bootstrap_admins(c, [('ayse','ayse','x'*12),('mehmet','mehmet','y'*12)]); c.close()"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          # -NonInteractive: betik yönetici sorarsa Read-Host hata verir ve adım başarısız olur.
+          powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts\windows\kurulum.ps1 `
+            -VeriKlasoru "$env:RUNNER_TEMP\oys"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
   lint:
     name: Statik analiz ve bağımlılık denetimi

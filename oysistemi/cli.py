@@ -74,6 +74,8 @@ def _cmd_key(s: Settings, args: argparse.Namespace) -> int:
         if s.master_key_path.exists():
             raise SystemExit(f"ana anahtar zaten var: {s.master_key_path}")
         rec_file = Path(args.file or s.recovery_key_path)
+        if not rec_file.is_file():
+            raise FileNotFoundError(f"kurtarma anahtarı dosyası bulunamadı: {rec_file}")
         import os
         master, _ = keyfile.decode(rec_file.read_bytes(), lambda: os.environ.get(
             "OYS_RECOVERY_PASSPHRASE") or getpass.getpass("Kurtarma anahtarı parolası: "))
@@ -104,6 +106,12 @@ def _cmd_backup(s: Settings, args: argparse.Namespace) -> int:
 
 def _cmd_restore(s: Settings, args: argparse.Namespace) -> int:
     from . import backup, osprotect
+    # Parola SORMADAN önce: dosya var mı, mevcut veritabanının üzerine mi yazılacak?
+    if not Path(args.file).is_file():
+        raise FileNotFoundError(f"yedek dosyası bulunamadı: {args.file}")
+    if s.db_path.exists():
+        raise FileExistsError(f"bu klasörde zaten bir veritabanı var: {s.db_path} "
+                              "(geri yükleme var olan verinin üzerine yazmaz)")
     for d in osprotect.protected_dirs(s):
         osprotect.harden(d)
     import os
@@ -127,21 +135,91 @@ def _cmd_harden(s: Settings, _: argparse.Namespace) -> int:
     return 1 if problems or failed else 0
 
 
+def _existing_admins(s: Settings) -> list[str]:
+    import sqlite3
+    if not s.db_path.exists():
+        return []
+    conn = sqlite3.connect(f"file:{s.db_path.as_posix()}?mode=ro", uri=True)
+    try:
+        return [r[0] for r in conn.execute("SELECT username FROM admins ORDER BY created_at")]
+    finally:
+        conn.close()
+
+
 def _cmd_bootstrap(s: Settings, args: argparse.Namespace) -> int:
+    # Parola SORMADAN önce denetle: yöneticiler varsa yazılan parolalar boşa gider.
+    existing = _existing_admins(s)
+    if existing:
+        print(f"Yöneticiler zaten oluşturulmuş: {', '.join(existing)}.")
+        print("Yeni yönetici eklemek için panelde Yöneticiler → Yeni yönetici önerisi kullanın.")
+        return 3
+    if len(args.admins) < 2:
+        print("HATA: iki kişi kuralı gereği en az iki yönetici gerekir.", file=sys.stderr)
+        return 2
     admins = []
     for spec in args.admins:
         admin_id, _, username = spec.partition(":")
-        pw = getpass.getpass(f"{username or admin_id} parolası: ")
-        if len(pw) < 12:
-            print("parola en az 12 karakter olmalı", file=sys.stderr)
-            return 2
+        gov._check_id(admin_id, "admin id")
+        gov._check_id(username or admin_id, "username")
+        pw = _ask_new_passphrase(f"{username or admin_id} için parola")
         admins.append((admin_id, username or admin_id, pw))
     ctx = open_context(s)
     try:
         gov.bootstrap_admins(ctx, admins)
     finally:
         ctx.close()
-    print(f"{len(admins)} yönetici oluşturuldu.")
+    print(f"{len(admins)} yönetici oluşturuldu: {', '.join(a[1] for a in admins)}")
+    print("Her yönetici ilk girişte kendi telefonuyla karekodu taratarak "
+          "iki adımlı doğrulamayı kurar.")
+    return 0
+
+
+def _cmd_status(s: Settings, args: argparse.Namespace) -> int:
+    """Kurulum durumu (şifreli verilere dokunmaz). --json: betikler için."""
+    import json
+    import sqlite3
+    info: dict = {"home": str(s.db_path.parent.parent), "initialised": False}
+    if s.master_key_path.exists():
+        info["key_protection"] = s.key_protection_in_use()
+        try:
+            s.load_keys()
+            info["key_opens"] = True
+        except Exception as exc:  # ör. DPAPI başka hesaba ait
+            info["key_opens"] = False
+            info["key_error"] = str(exc)
+        info["recovery_key_on_server"] = s.recovery_key_path.exists()
+    if s.db_path.exists():
+        conn = sqlite3.connect(f"file:{s.db_path.as_posix()}?mode=ro", uri=True)
+        try:
+            info["initialised"] = s.master_key_path.exists()
+            info["admins"] = [
+                {"username": r[0], "role": r[1], "totp": bool(r[2]),
+                 "pending_enrollment": r[3].startswith("enroll:")}
+                for r in conn.execute("SELECT username, role, totp_secret_enc IS NOT NULL, "
+                                      "pw_hash FROM admins ORDER BY created_at")]
+            info["elections"] = {r[0]: r[1] for r in conn.execute(
+                "SELECT status, COUNT(*) FROM elections GROUP BY status")}
+        finally:
+            conn.close()
+    if args.json:
+        print(json.dumps(info, ensure_ascii=False))
+        return 0
+    if not info["initialised"]:
+        print(f"Kurulum yok: {info['home']}  →  oysistemi --home ... init")
+        return 1
+    print(f"Kurulum:          {info['home']}")
+    print(f"Ana anahtar:      {info['key_protection']} — "
+          + ("bu hesapta açılıyor" if info["key_opens"] else f"AÇILMIYOR ({info['key_error']})"))
+    if info["recovery_key_on_server"]:
+        print("Kurtarma anahtarı: SUNUCUDA — çevrimdışına taşıyın ve silin")
+    print("Yöneticiler:")
+    for a in info["admins"]:
+        state = ("etkinleştirme bekliyor" if a["pending_enrollment"] else
+                 "iki adımlı doğrulama kurulu" if a["totp"] else
+                 "ilk girişte karekodla kurulacak")
+        print(f"  - {a['username']} ({a['role']}): {state}")
+    print("Oylamalar:        " + (", ".join(f"{k}: {v}" for k, v in info["elections"].items())
+                                  or "yok"))
     return 0
 
 
@@ -247,6 +325,8 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("admins", nargs="+", metavar="ID:KULLANICI")
     sub.add_parser("verify", help="tüm bütünlük kontrollerini çalıştır")
     sub.add_parser("checkpoint", help="harici checkpoint yaz")
+    st = sub.add_parser("status", help="kurulum durumu (yöneticiler, anahtar, oylamalar)")
+    st.add_argument("--json", action="store_true", help="betikler için JSON çıktı")
     sub.add_parser("tick", help="zamanı gelen oylamaları kapat (cron)")
     sub.add_parser("clock", help="güvenilir saat durumunu göster")
     sv = sub.add_parser("serve", help="web sunucusunu başlat")
@@ -260,12 +340,34 @@ def main(argv: list[str] | None = None) -> int:
     handlers = {"init": _cmd_init, "bootstrap-admins": _cmd_bootstrap,
                 "verify": _cmd_verify, "checkpoint": _cmd_checkpoint, "serve": _cmd_serve,
                 "tick": _cmd_tick, "clock": _cmd_clock, "key": _cmd_key,
-                "backup": _cmd_backup, "restore": _cmd_restore, "harden": _cmd_harden}
+                "backup": _cmd_backup, "restore": _cmd_restore, "harden": _cmd_harden,
+                "status": _cmd_status}
     settings = Settings.from_env(args.home)
     if args.cmd in ("verify", "tick", "clock", "checkpoint", "bootstrap-admins"):
         configure_clock(settings)
         check_clock_against_db(settings)
-    return handlers[args.cmd](settings, args)
+    try:
+        return handlers[args.cmd](settings, args)
+    except _user_errors() as exc:
+        # Kullanıcının düzeltebileceği durumlar: iz kaydı yerine anlaşılır mesaj.
+        print(f"HATA: {exc}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        print("\nİptal edildi.", file=sys.stderr)
+        return 130
+
+
+def _user_errors() -> tuple[type[BaseException], ...]:
+    from .admin.enrollment import EnrollmentError
+    from .auth.voter_auth import VoterAuthError
+    from .context import LockedError
+    from .crypto.keyfile import KeyFileError
+    from .elections.ballot_types import ConfigError
+    from .elections.service import ElectionStateError
+    from .timekeeping import ClockError
+    return (gov.GovernanceError, EnrollmentError, VoterAuthError, LockedError, KeyFileError,
+            ConfigError, ElectionStateError, ClockError, FileExistsError, FileNotFoundError,
+            PermissionError)
 
 
 if __name__ == "__main__":

@@ -54,10 +54,11 @@ Hepsi `oysistemi [--home KLASÖR] <komut>` biçimindedir (`python -m oysistemi.c
 | Komut | Açıklama |
 |---|---|
 | `init [--recovery-passphrase-env DEĞ] [--passphrase-env DEĞ]` | Yeni kurulum: klasör izinlerini kilitler, korumalı ana anahtarı, kurtarma anahtarını ve boş şemayı oluşturur |
-| `bootstrap-admins ID:KULLANICI ...` | İlk yöneticiler (en az iki; yalnızca hiç yönetici yokken) |
+| `bootstrap-admins ID:KULLANICI ...` | İlk yöneticiler (en az iki; yalnızca hiç yönetici yokken, aksi halde parola sormadan çıkış kodu 3) |
 | `serve [--host 127.0.0.1] [--port 8000] [--forwarded-allow-ips 127.0.0.1] [--insecure-http]` | Web sunucusu. Erişim logu kapalıdır; açılışta izinleri yeniden kilitler; zamanlayıcıyı çalıştırır. |
 | `tick` | Bitiş zamanı gelen oylamaları kapatır ve sayar (cron/Görev Zamanlayıcı) |
 | `clock` | Güvenilir saatin güvence seviyesi, sistem saati sapması ve alarmlar. Sorun varsa çıkış kodu 1. |
+| `status [--json]` | Kurulum durumu: anahtar bu hesapta açılıyor mu, yöneticiler ve iki adımlı doğrulama durumu, oylama sayıları |
 | `verify` | Tüm bütünlük denetimleri. Kritik bulgu varsa çıkış kodu 1. |
 | `checkpoint` | Harici checkpoint yazar |
 | `harden` | Klasör izinlerini kilitler ve denetler |
