@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ e.title }}{% endblock %}
+{% block content %}
+<h1>{{ e.title }} <span class="badge {{ e.status }}">{{ {'draft':'Taslak','open':'Açık','closed':'Kapandı','tallied':'Sayıldı','archived':'Arşiv'}[e.status] }}</span></h1>
+<p class="muted">Kimlik: <span class="mono">{{ e.id }}</span> · {{ ballot_labels.get(e.ballot_type) }}
+  {% if e.status != 'draft' %} · Seçmen bağlantısı: <a href="/e/{{ e.id }}">/e/{{ e.id }}</a>{% endif %}</p>
+
+<div class="grid">
+  <div class="card"><div class="muted">Seçmen listesi</div><div class="stat">{{ stats.roll }}</div></div>
+  <div class="card"><div class="muted">Başlangıç</div><div class="stat small">{{ cfg.opens_at|localtime if cfg.opens_at else 'Açılış onayıyla' }}</div></div>
+  <div class="card"><div class="muted">Bitiş</div><div class="stat small">{{ cfg.closes_at|localtime }}</div></div>
+</div>
+{% if e.status == 'open' %}
+<div class="flash warn">🔒 Oylama mühürlü: katılım ve sonuç, bitiş zamanı geçip sayım yapılana kadar
+  hiçbir ekranda gösterilmez — yöneticiler dahil.
+  {% if window == 'before' %}Oy verme henüz başlamadı.{% elif window == 'during' %}Oy verme sürüyor.
+  {% else %}Bitiş zamanı geçti; sistem oylamayı otomatik olarak kapatıp sayacak.{% endif %}</div>
+{% endif %}
+
+{% if e.status == 'draft' %}
+<form class="card" method="post" action="/admin/elections/{{ e.id }}/config">
+  <h2>Yapılandırma</h2>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {% include "admin/_election_fields.html" %}
+  <button>Kaydet</button>
+</form>
+
+<form class="card" method="post" action="/admin/elections/{{ e.id }}/roll">
+  <h2>Seçmen listesi</h2>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <p class="muted">İşaretli seçmenler bu oylamada oy kullanabilir. Değişiklikler başka bir
+    yöneticinin onayıyla uygulanır.</p>
+  {% if not all_voters %}<p>Önce <a href="/admin/voters">seçmen ekleyin</a>.</p>{% endif %}
+  <table>
+    {% for v in all_voters if v.status == 'active' %}
+    <tr><td><label class="check"><input type="checkbox" name="voter" value="{{ v.id }}" {% if v.id in roll %}checked{% endif %}>
+      <span class="mono">{{ v.id }}</span> — {{ v.display_name }}</label></td>
+      <td class="muted">{{ v.email or 'e-posta yok' }}</td></tr>
+    {% endfor %}
+  </table>
+  <button>Liste değişikliğini öner</button>
+</form>
+
+<form class="card" method="post" action="/admin/elections/{{ e.id }}/open"
+      data-confirm="Açılış önerisi oluşturulacak. Onaylandığında yapılandırma ve seçmen listesi kalıcı olarak mühürlenir. Devam edilsin mi?">
+  <h2>Oylamayı aç</h2>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <p class="muted">Açılış ikinci bir yöneticinin onayını gerektirir. Onay anında seçime özel
+    anahtar çifti üretilir, yapılandırma ve liste mühürlenir.</p>
+  <button>Açılışı öner</button>
+</form>
+{% endif %}
+
+{% if e.status == 'open' %}
+<div class="card">
+  <h2>Seçmen girişi</h2>
+  {% if 'printed_code' in cfg.auth_methods %}
+  <form method="post" action="/admin/elections/{{ e.id }}/codes"
+        data-confirm="Kodlar yalnızca BİR KEZ gösterilir. Hemen yazdırıp kapalı zarflarla dağıtın. Devam edilsin mi?">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <p>Basılı kod üretilen seçmen: <strong>{{ stats.codes }} / {{ stats.roll }}</strong></p>
+    <button {% if stats.codes >= stats.roll %}disabled{% endif %}>Eksik kodları üret ve yazdır</button>
+    <p class="muted">Kodu gören kişi o seçmen adına oy hakkı alabilir. Kodlar yalnızca bir kez
+      gösterilir ve sunucuda yalnızca hash'leri tutulur; aynı seçmene ikinci kez kod üretilmez.</p>
+  </form>
+  {% endif %}
+  {% if 'email_otp' in cfg.auth_methods %}
+  <p>E-posta ile giriş açık: seçmenler <a href="/e/{{ e.id }}">/e/{{ e.id }}</a> adresinden kod isteyebilir.</p>
+  {% endif %}
+</div>
+
+{% if window == 'after' %}
+<form class="card" method="post" action="/admin/elections/{{ e.id }}/close">
+  <h2>Kapat ve say</h2>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <p class="muted">Sistem bunu kendiliğinden yapar. Zamanlayıcı çalışmıyorsa (ör. saat
+    doğrulanamadıysa) buradan önerip ikinci bir yöneticiye onaylatabilirsiniz. Kapanışta özel
+    anahtar imha edilir; bundan sonra kimse geçerli oy üretemez.</p>
+  <button class="danger">Kapanışı öner</button>
+</form>
+{% endif %}
+{% endif %}
+
+{% if result %}
+<div class="card">
+  <h2>Sonuç</h2>
+  <p>Katılım: {{ result.turnout }} / {{ result.eligible }}{% if result.rejected_ballots %} ·
+    <strong>{{ result.rejected_ballots }} geçersiz pusula reddedildi</strong>{% endif %}</p>
+  <p><a class="btn" href="/e/{{ e.id }}/results">Kamuya açık sonuç sayfası</a></p>
+</div>
+{% endif %}
+
+{% if voter_log %}
+<div class="card">
+  <h2>Seçmen olay kaydı</h2>
+  <p class="muted">Kim ne zaman giriş yaptı / oy hakkı aldı. Oyların içeriğiyle hiçbir bağı yoktur.</p>
+  <table>
+    <tr><th>#</th><th>Zaman</th><th>Seçmen</th><th>Olay</th></tr>
+    {% for r in voter_log %}<tr><td>{{ r.seq }}</td><td>{{ r.ts|localtime }}</td><td class="mono">{{ r.voter_id }}</td>
+      <td>{{ 'Giriş' if r.action == 'voter_login' else 'Oy hakkı aldı' }}</td></tr>{% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if e.config_hash %}
+<div class="card muted">
+  <h2>Mühürler</h2>
+  <p>Yapılandırma: <span class="mono">{{ e.config_hash }}</span></p>
+  <p>Seçmen listesi: <span class="mono">{{ e.roll_hash }}</span></p>
+  <p>Özel anahtar: {{ 'imha edildi ✅' if e.privkey_wrapped is none else 'şifreli olarak saklanıyor (kapanışta imha edilecek)' }}</p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/admin.js"></script>{% endblock %}

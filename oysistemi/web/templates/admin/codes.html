@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Giriş kodları — {{ e.title }}{% endblock %}
+{% block content %}
+<div class="flash warn noprint">Bu kodlar <strong>yalnızca şimdi</strong> gösteriliyor. Sayfayı
+  yazdırın, kesip kapalı zarflara koyun ve seçmenlere elden verin. Sayfayı kapattıktan sonra
+  kodlar bir daha görüntülenemez.</div>
+<p class="noprint"><button id="print" type="button">Yazdır</button>
+  <a href="/admin/elections/{{ e.id }}">Oylamaya dön</a></p>
+{% if not codes %}<p>Kod üretilecek seçmen kalmadı.</p>{% endif %}
+<table class="codes">
+  {% for c in codes %}
+  <tr>
+    <td><strong>{{ e.title }}</strong><br>{{ c.display_name }}<br>
+        <span class="muted">Adres: {{ url }}</span></td>
+    <td>Seçmen kimliği<br><span class="code">{{ c.voter_id }}</span></td>
+    <td>Giriş kodu<br><span class="code">{{ c.code }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
+{% block scripts %}<script src="/static/admin.js"></script>{% endblock %}

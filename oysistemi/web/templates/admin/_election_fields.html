@@ -1,0 +1,48 @@
+{% set b = cfg.ballot %}
+<label for="f-title">Başlık</label>
+<input id="f-title" type="text" name="title" required value="{{ e.title if e else '' }}">
+
+<label for="f-type">Oy türü</label>
+<select id="f-type" name="ballot_type">
+  {% for key, label in ballot_labels.items() %}
+  <option value="{{ key }}" {% if key == bt %}selected{% endif %}>{{ label }}</option>
+  {% endfor %}
+</select>
+
+<div data-types="single multi approval borda ranked_irv">
+  <label for="f-options">Seçenekler (her satıra bir tane)</label>
+  <textarea id="f-options" name="options">{{ (b.options or [])|join('\n') }}</textarea>
+</div>
+<div data-types="single yes_no">
+  <label class="check"><input type="checkbox" name="allow_blank" {% if b.allow_blank %}checked{% endif %}> Boş oya izin ver</label>
+</div>
+<div data-types="multi" class="grid">
+  <div><label for="f-min">En az seçim</label>
+    <input id="f-min" type="number" min="0" name="min_choices" value="{{ b.min_choices if b.min_choices is defined else 1 }}"></div>
+  <div><label for="f-max">En çok seçim</label>
+    <input id="f-max" type="number" min="1" name="max_choices" value="{{ b.max_choices if b.max_choices is defined else '' }}"></div>
+</div>
+<div data-types="borda ranked_irv">
+  <label class="check"><input type="checkbox" name="require_full_ranking" {% if b.require_full_ranking %}checked{% endif %}> Tüm seçenekler sıralanmalı</label>
+</div>
+
+<div class="grid">
+  <div><label for="f-opens">Başlangıç ({{ tzname }})</label>
+    <input id="f-opens" type="datetime-local" name="opens_at" value="{{ cfg.opens_at|localinput }}">
+    <span class="muted">Boş: açılış onaylandığı an</span></div>
+  <div><label for="f-closes">Bitiş ({{ tzname }}) — zorunlu</label>
+    <input id="f-closes" type="datetime-local" name="closes_at" required value="{{ cfg.closes_at|localinput }}">
+    <span class="muted">Bu ana kadar katılım ve sonuç kimseye gösterilmez</span></div>
+</div>
+
+<label for="f-turnout">Asgari katılım (bunun altında döküm gizlenir)</label>
+<input id="f-turnout" type="number" min="1" name="min_turnout" value="{{ cfg.min_turnout }}">
+
+<label>Seçmen giriş yöntemleri</label>
+{% set method_labels = {'printed_code': 'Basılı tek kullanımlık kod (kapalı zarfla dağıtılır)',
+                        'email_otp': 'E-posta ile tek kullanımlık kod'} %}
+{% for m in methods %}
+<label class="check"><input type="checkbox" name="auth_{{ m }}" {% if m in cfg.auth_methods %}checked{% endif %}> {{ method_labels[m] }}</label>
+{% endfor %}
+
+<label class="check"><input type="checkbox" name="randomize_order" {% if cfg.randomize_order %}checked{% endif %}> Seçenek sırasını her seçmene karışık göster</label>

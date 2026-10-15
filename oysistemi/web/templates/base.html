@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}OySistemi{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="{% if admin %}/admin{% else %}/{% endif %}">🗳️ OySistemi</a>
+    {% if admin %}
+    <nav>
+      <a href="/admin">Pano</a>
+      <a href="/admin/voters">Seçmenler</a>
+      <a href="/admin/elections/new">Yeni oylama</a>
+      <a href="/admin/admins">Yöneticiler</a>
+      <a href="/admin/audit">Ayak izi</a>
+      <a href="/admin/verify">Bütünlük</a>
+      <form method="post" action="/admin/logout" class="inline">
+        <button class="link">Çıkış ({{ admin.username }})</button>
+      </form>
+    </nav>
+    {% endif %}
+  </header>
+  <main>
+    {% if admin %}{% set c = clock() %}
+      {% if c.assurance == 'unverified' %}<div class="flash bad">⏱ Saat dış kaynaklarla doğrulanamadı: oylamalar bitiş zamanında kapanmayacak, saat doğrulanana kadar bekleyecek.</div>{% endif %}
+      {% for a in c.alarms if a.kind in ('clock_rollback', 'system_clock_jump') %}<div class="flash bad">⏱ Saat alarmı ({{ a.at }}): {{ a.detail }}</div>{% endfor %}
+    {% endif %}
+    {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
+    {% if err %}<div class="flash bad">{{ err }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>Oylar kör imza ile anonimleştirilir · Hiçbir oy seçmene bağlanamaz<br>
+    OySistemi {{ version }} · AGPL-3.0{% if source_url %} · <a href="{{ source_url }}">Kaynak kodu</a>{% endif %}</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

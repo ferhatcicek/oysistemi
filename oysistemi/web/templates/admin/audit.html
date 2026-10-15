@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Ayak izi{% endblock %}
+{% block content %}
+<h1>Ayak izi (denetim kaydı)</h1>
+<p class="muted">Her kayıt bir öncekinin hash'ini içerir ve DB dışındaki bir anahtarla
+  imzalanır. Bir kaydın silinmesi, değiştirilmesi veya araya kayıt eklenmesi
+  <a href="/admin/verify">bütünlük kontrolünde</a> tespit edilir. Oy içerikleri burada
+  <strong>asla</strong> yer almaz.</p>
+<p class="muted">🔒 Seçmen giriş ve oy hakkı kayıtları her oylamanın kendi ayrı zincirinde
+  tutulur ve sayımdan sonra oylama sayfasında görünür. Böylece bu listedeki sıra
+  numaralarından katılım çıkarılamaz.</p>
+<div class="card">
+  <table>
+    <tr><th>#</th><th>Zaman (UTC)</th><th>Kim</th><th>İşlem</th><th>Ayrıntı</th></tr>
+    {% for r in rows %}
+    <tr><td>{{ r.seq }}</td><td class="mono">{{ r.ts }}</td><td>{{ r.actor }}</td><td>{{ r.action }}</td>
+        <td class="mono">{{ r.payload[:300] }}{% if r.payload|length > 300 %}…{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

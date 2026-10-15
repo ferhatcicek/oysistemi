@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Seçmenler{% endblock %}
+{% block content %}
+<h1>Seçmenler</h1>
+<form class="card" method="post" action="/admin/voters">
+  <h2>Seçmen ekleme önerisi</h2>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <p class="muted">Her satıra bir seçmen: <span class="mono">kimlik; ad soyad; e-posta</span>.
+     E-posta isteğe bağlıdır (e-posta ile giriş için gerekir). Kimlik yalnızca harf, rakam,
+     <span class="mono">. _ -</span> içerebilir; örneğin üye numarası.</p>
+  <textarea name="lines" placeholder="1001; Ayşe Yılmaz; ayse@example.org&#10;1002; Mehmet Kaya"></textarea>
+  <button>Ekleme öner</button>
+</form>
+
+<div class="card">
+  <h2>Kayıtlı seçmenler ({{ voters|length }})</h2>
+  <p class="muted">Seçmenler hiçbir zaman silinmez, yalnızca devre dışı bırakılır; böylece iz kaybolmaz.</p>
+  <table>
+    <tr><th>Kimlik</th><th>Ad</th><th>E-posta</th><th>Durum</th><th></th></tr>
+    {% for v in voters %}
+    <tr><td class="mono">{{ v.id }}</td><td>{{ v.display_name }}</td><td>{{ v.email or '—' }}</td>
+      <td>{{ 'Etkin' if v.status == 'active' else 'Devre dışı' }}</td>
+      <td>{% if v.status == 'active' %}
+        <form method="post" action="/admin/voters/{{ v.id }}/disable" class="inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <button class="link">devre dışı bırakmayı öner</button>
+        </form>{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

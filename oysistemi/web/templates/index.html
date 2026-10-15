@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Oylamalar</h1>
+<div class="card">
+  {% if not elections %}
+    <p class="muted">Şu anda açık ya da sonuçlanmış bir oylama yok.</p>
+  {% else %}
+  <table>
+    <tr><th>Oylama</th><th>Bitiş</th><th>Durum</th><th></th></tr>
+    {% for e in elections %}
+    <tr>
+      <td>{{ e.title }}</td>
+      <td>{{ e.closes_at|localtime }}</td>
+      <td>{% if e.status == 'open' %}<span class="badge open">Oy kullanıma açık</span>
+          {% else %}<span class="badge">Sonuçlandı</span>{% endif %}</td>
+      <td>{% if e.status == 'open' %}<a class="btn" href="/e/{{ e.id }}">Oy ver</a>
+          {% else %}<a href="/e/{{ e.id }}/results">Sonuçlar</a>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+<p class="muted"><a href="/admin">Yönetici girişi</a></p>
+{% endblock %}

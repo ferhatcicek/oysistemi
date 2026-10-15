@@ -1,0 +1,72 @@
+:root {
+  --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #5d6677; --line: #dde1e8;
+  --accent: #2456c7; --accent-text: #fff; --ok: #1d7a43; --ok-bg: #e6f4ec;
+  --bad: #b3261e; --bad-bg: #fbe9e7; --warn: #8a5a00; --warn-bg: #fff4dc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171d; --card: #1d2129; --text: #e7eaf0; --muted: #9aa3b2; --line: #313745;
+    --accent: #6d9bff; --accent-text: #0b1020; --ok: #6fd39a; --ok-bg: #16301f;
+    --bad: #ff8a80; --bad-bg: #3a1a18; --warn: #ffcc66; --warn-bg: #352a10;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+       background: var(--bg); color: var(--text); }
+header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center;
+             padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 700; text-decoration: none; color: var(--text); }
+nav { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a:hover { color: var(--accent); }
+main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+footer { text-align: center; color: var(--muted); font-size: 13px; padding: 32px 16px; }
+h1 { font-size: 26px; margin: 0 0 16px; }
+h2 { font-size: 19px; margin: 0 0 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+        padding: 20px; margin-bottom: 20px; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+label { display: block; margin: 10px 0 4px; font-weight: 600; font-size: 14px; }
+label.check { font-weight: 400; display: flex; gap: 8px; align-items: center; }
+input[type=text], input[type=password], input[type=number], input[type=email], select, textarea {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 7px;
+  background: var(--bg); color: var(--text); font: inherit; }
+textarea { min-height: 120px; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+button, .btn { display: inline-block; padding: 9px 16px; border-radius: 7px; border: 0;
+  background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600;
+  cursor: pointer; text-decoration: none; margin-top: 12px; }
+button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+button.danger { background: var(--bad); color: #fff; }
+button.link { background: none; color: var(--muted); padding: 0; margin: 0; font-weight: 400; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+form.inline { display: inline; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line);
+         vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+.flash { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
+.flash.ok { background: var(--ok-bg); color: var(--ok); }
+.flash.bad { background: var(--bad-bg); color: var(--bad); }
+.flash.warn { background: var(--warn-bg); color: var(--warn); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px;
+         font-weight: 600; background: var(--bg); border: 1px solid var(--line); }
+.badge.open { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+.badge.draft { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.muted { color: var(--muted); }
+.mono { font-family: ui-monospace, Consolas, monospace; font-size: 13px; word-break: break-all; }
+.option { display: flex; gap: 10px; align-items: center; padding: 12px; margin: 8px 0;
+          border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.option:hover { border-color: var(--accent); }
+.option select { width: auto; }
+th.barcol { width: 45%; }
+meter { width: 100%; height: 14px; }
+.stat { font-size: 28px; font-weight: 700; }
+.stat.small { font-size: 18px; }
+.codes td { padding: 14px 6px; }
+.code { font: 700 20px ui-monospace, Consolas, monospace; letter-spacing: 2px; }
+.hidden { display: none; }
+@media print {
+  header.top, footer, .noprint { display: none; }
+  .codes tr { page-break-inside: avoid; }
+  body { background: #fff; color: #000; }
+}

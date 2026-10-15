@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Yeni oylama{% endblock %}
+{% block content %}
+<h1>Yeni oylama</h1>
+<form class="card" method="post" action="/admin/elections/new">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="f-id">Oylama kimliği (adreste görünür, ör. <span class="mono">baskan-2026</span>)</label>
+  <input id="f-id" type="text" name="id" required pattern="[A-Za-z0-9._\-]{1,64}">
+  {% include "admin/_election_fields.html" %}
+  <button>Taslak oluştur</button>
+  <p class="muted">Taslak serbestçe düzenlenebilir. Oylama açıldığında yapılandırma ve seçmen
+    listesi mühürlenir ve bir daha değiştirilemez.</p>
+</form>
+{% endblock %}
+{% block scripts %}<script src="/static/admin.js"></script>{% endblock %}

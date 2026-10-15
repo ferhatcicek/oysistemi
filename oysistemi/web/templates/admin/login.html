@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Yönetici girişi{% endblock %}
+{% block content %}
+<form class="card" method="post" action="/admin/login">
+  <h1>Yönetici girişi</h1>
+  <label for="u">Kullanıcı adı</label>
+  <input id="u" type="text" name="username" required autocomplete="username">
+  <label for="p">Parola</label>
+  <input id="p" type="password" name="password" required autocomplete="current-password">
+  <button>Devam</button>
+  <p class="muted">Sonraki adımda kimlik doğrulayıcı uygulamanızdaki 6 haneli kod istenecek.</p>
+</form>
+{% endblock %}

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Testler (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - uses: actions/setup-node@v4  # blindsig.js ↔ Python çapraz testleri için
+        with:
+          node-version: "20"
+      - name: Bağımlılıklar
+        run: python -m pip install -e ".[dev]"
+      - name: Testler
+        run: python -m pytest -q
+        env:
+          PYTHONUTF8: "1"
+
+  lint:
+    name: Statik analiz ve bağımlılık denetimi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: python -m pip install -e ".[dev]"
+      - name: Ruff
+        run: ruff check oysistemi tests scripts
+      - name: Bandit (güvenlik)
+        run: bandit -q -c pyproject.toml -r oysistemi
+      - name: pip-audit (bilinen açıklar)
+        run: pip-audit --progress-spinner off .
+      - name: PowerShell betiklerinde UTF-8 BOM
+        run: |
+          for f in scripts/windows/*.ps1; do
+            head -c3 "$f" | od -An -tx1 | grep -q "ef bb bf" || { echo "BOM eksik: $f"; exit 1; }
+          done

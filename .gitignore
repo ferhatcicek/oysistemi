@@ -1,0 +1,42 @@
+# ─── GİZLİ: anahtarlar, veritabanları, yedekler — ASLA depoya girmemeli ───
+secrets/
+*.oyskey
+master.key
+*.oysbak
+data/
+checkpoints/
+outbox/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+.env
+.env.*
+
+# Deneme kurulumu (scripts/demo_setup.py) — içinde deneme parolaları var
+demo/
+DENEME_GIRIS.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editör / işletim sistemi / yerel araçlar
+.vscode/
+.idea/
+.claude/
+*.swp
+Thumbs.db
+Desktop.ini
+.DS_Store

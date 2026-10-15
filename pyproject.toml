@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oysistemi"
+dynamic = ["version"]
+description = "Küçük organizasyonlar için kör imzalı, denetlenebilir güvenli oylama sistemi"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Ferhat Çiçek" }]
+requires-python = ">=3.12"
+keywords = ["oylama", "seçim", "voting", "election", "blind-signature", "rfc9474", "privacy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: FastAPI",
+    "Intended Audience :: Other Audience",
+    "Natural Language :: Turkish",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security :: Cryptography",
+]
+dependencies = [
+    "cryptography>=43",
+    "argon2-cffi>=23.1",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+    # Windows'ta saat dilimi veritabanı Python ile gelmez; olmazsa Europe/Istanbul açılmaz.
+    "tzdata>=2024.1; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27", "ruff", "bandit", "pip-audit"]
+
+[project.scripts]
+oysistemi = "oysistemi.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "oysistemi.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["oysistemi*"]
+
+[tool.setuptools.package-data]
+"oysistemi.db" = ["schema.sql"]
+"oysistemi.web" = ["templates/*.html", "templates/admin/*.html", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+ignore = [
+    "S101",   # testlerde assert
+    "S608",   # tablo adları sabit beyaz listeden gelir (bkz. db/connection.py)
+    "S603",   # subprocess yalnızca System32 içindeki sabit araçları çağırır
+    "B008",   # FastAPI Depends/Form varsayılanları
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "B"]
+"scripts/*" = ["E402"]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "build"]
+skips = ["B101", "B608", "B603"]

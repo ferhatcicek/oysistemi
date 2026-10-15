@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ e.title }} — Oy ver{% endblock %}
+{% block content %}
+<h1>{{ e.title }}</h1>
+{% set bt = e.ballot_type %}
+{% set b = cfg.ballot %}
+<form id="ballot" class="card" data-election="{{ e.id }}" data-type="{{ bt }}" data-csrf="{{ csrf }}">
+  {% if bt in ('single', 'yes_no') %}
+    <h2>Bir seçenek işaretleyin</h2>
+    {% for o in options %}
+    <label class="option"><input type="radio" name="choice" value="{{ o }}"> {{ o }}</label>
+    {% endfor %}
+    {% if b.allow_blank %}
+    <label class="option muted"><input type="radio" name="choice" value=""> Boş oy</label>
+    {% endif %}
+  {% elif bt in ('multi', 'approval') %}
+    {% if bt == 'approval' %}
+      <h2>Uygun bulduğunuz tüm seçenekleri işaretleyin</h2>
+    {% else %}
+      <h2>En az {{ b.min_choices or 0 }}, en çok {{ b.max_choices or options|length }} seçenek işaretleyin</h2>
+    {% endif %}
+    {% for o in options %}
+    <label class="option"><input type="checkbox" name="choices" value="{{ o }}"> {{ o }}</label>
+    {% endfor %}
+  {% else %}
+    <h2>Seçenekleri tercih sıranıza göre numaralandırın</h2>
+    <p class="muted">1 = en çok tercih ettiğiniz.
+      {% if b.require_full_ranking %}Tüm seçenekleri sıralamalısınız.{% else %}Sıralamak istemediklerinizi boş bırakabilirsiniz.{% endif %}</p>
+    {% for o in options %}
+    <label class="option">
+      <select name="rank" data-option="{{ o }}">
+        <option value="">—</option>
+        {% for i in range(1, options|length + 1) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+      </select> {{ o }}
+    </label>
+    {% endfor %}
+  {% endif %}
+  <div id="form-error" class="flash bad hidden"></div>
+  <button id="submit" type="submit">Oyumu gönder</button>
+</form>
+
+<div id="progress" class="card hidden">
+  <h2>Oyunuz gönderiliyor…</h2>
+  <ol>
+    <li id="st-issue">Anonim oy hakkı alınıyor (kör imza)</li>
+    <li id="st-logout">Oturum kapatılıyor — bu andan sonra kimliğiniz bilinmiyor</li>
+    <li id="st-wait">Zaman bağıntısını kırmak için kısa bekleme <span id="wait-left"></span></li>
+    <li id="st-cast">Kimliksiz olarak sandığa atılıyor</li>
+  </ol>
+</div>
+
+<div id="done" class="card hidden">
+  <h2>✅ Oyunuz sandıkta</h2>
+  <p>Makbuz numaranız:</p>
+  <p class="mono" id="receipt"></p>
+  <p class="muted">Bu numara yalnızca <em>oyunuzun sayıldığını</em> kanıtlar; ne oy verdiğinizi
+    göstermez. Oylama kapandığında <a href="/e/{{ e.id }}/results">sonuç sayfasında</a> listede
+    olduğunu kontrol edebilirsiniz. Makbuz bu tarayıcıda da saklanır.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/blindsig.js"></script>
+<script src="/static/vote.js"></script>
+{% endblock %}

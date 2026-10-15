@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ e.title }} — Giriş{% endblock %}
+{% block content %}
+<h1>{{ e.title }}</h1>
+{% if cfg %}<p class="muted">Oy verme bitişi: <strong>{{ cfg.closes_at|localtime }}</strong> ({{ tzname }})</p>{% endif %}
+{% if error == 'code' %}<div class="flash bad">Kimlik veya kod hatalı, süresi dolmuş ya da çok fazla denendi.</div>{% endif %}
+{% if error == 'rate' %}<div class="flash bad">Çok fazla deneme yapıldı. Lütfen biraz sonra tekrar deneyin.</div>{% endif %}
+{% if email_sent %}<div class="flash ok">Bu kimlik oylama listesinde kayıtlıysa e-posta adresinize bir kod gönderildi.</div>{% endif %}
+
+<div class="grid">
+  {% if 'printed_code' in methods %}
+  <form class="card" method="post" action="/e/{{ e.id }}/login">
+    <h2>Size verilen kodla giriş</h2>
+    <input type="hidden" name="method" value="printed_code">
+    <label for="pc-id">Seçmen kimliği</label>
+    <input id="pc-id" type="text" name="voter_id" required autocomplete="username">
+    <label for="pc-code">Giriş kodu</label>
+    <input id="pc-code" type="text" name="code" required placeholder="ABCD-EFGH-JKLM" autocomplete="one-time-code">
+    <button>Giriş</button>
+  </form>
+  {% endif %}
+
+  {% if 'email_otp' in methods %}
+  <div class="card">
+    <h2>E-posta ile giriş</h2>
+    {% if not email_sent %}
+    <form method="post" action="/e/{{ e.id }}/email">
+      <label for="em-id">Seçmen kimliği</label>
+      <input id="em-id" type="text" name="voter_id" required autocomplete="username">
+      <button>Kod gönder</button>
+    </form>
+    {% else %}
+    <form method="post" action="/e/{{ e.id }}/login">
+      <input type="hidden" name="method" value="email_otp">
+      <input type="hidden" name="voter_id" value="{{ voter_id }}">
+      <label for="em-code">E-postadaki 8 haneli kod</label>
+      <input id="em-code" type="text" name="code" required inputmode="numeric" autocomplete="one-time-code">
+      <button>Giriş</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="card muted">
+  <strong>Gizliliğiniz:</strong> Giriş yalnızca oy hakkınızı doğrulamak içindir. Oy pusulanız
+  tarayıcınızda kör imza ile anonimleştirilir ve oturumunuz kapatıldıktan sonra kimliksiz
+  olarak sandığa gönderilir. Sistem yöneticileri dahil hiç kimse kime oy verdiğinizi göremez.
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+name: Hata bildirimi
+description: Beklenmeyen bir davranış bildirin (GÜVENLİK AÇIKLARI İÇİN KULLANMAYIN)
+labels: ["hata"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **Güvenlik açığı mı buldunuz?** Lütfen burada açık bildirmeyin; [SECURITY.md](../blob/main/SECURITY.md)
+        içindeki özel bildirim yolunu kullanın. Ekran görüntülerinde seçmen adı, e-posta,
+        giriş kodu, parola veya anahtar paylaşmayın.
+  - type: input
+    id: surum
+    attributes:
+      label: OySistemi sürümü
+      placeholder: "0.1.0 (sayfa altbilgisinde yazar)"
+    validations:
+      required: true
+  - type: dropdown
+    id: isletim
+    attributes:
+      label: İşletim sistemi
+      options: ["Windows 11", "Windows 10", "Windows Server", "Linux", "Diğer"]
+    validations:
+      required: true
+  - type: textarea
+    id: adimlar
+    attributes:
+      label: Yeniden oluşturma adımları
+      placeholder: "1. ... 2. ... 3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: beklenen
+    attributes:
+      label: Beklenen ve gerçekleşen davranış
+    validations:
+      required: true
+  - type: textarea
+    id: verify
+    attributes:
+      label: "`oysistemi verify` ve `oysistemi clock` çıktısı (varsa)"
+      render: text

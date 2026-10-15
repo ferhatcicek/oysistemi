@@ -1,0 +1,22 @@
+name: Özellik önerisi
+description: Yeni bir özellik veya iyileştirme önerin
+labels: ["öneri"]
+body:
+  - type: textarea
+    id: ihtiyac
+    attributes:
+      label: Hangi ihtiyacı karşılıyor?
+      description: Kuruluşunuzda hangi durumda gerekli oldu?
+    validations:
+      required: true
+  - type: textarea
+    id: oneri
+    attributes:
+      label: Önerilen çözüm
+  - type: textarea
+    id: guvenlik
+    attributes:
+      label: Güvenlik etkisi
+      description: >
+        Öneri oy gizliliğini, tek oy kuralını, seçmen listesinin korunmasını, zaman
+        kurallarını veya denetim izini etkiliyor mu?

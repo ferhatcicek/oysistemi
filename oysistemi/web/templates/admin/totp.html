@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}İki adımlı doğrulama{% endblock %}
+{% block content %}
+<form class="card" method="post" action="/admin/totp">
+  <h1>İki adımlı doğrulama</h1>
+  {% if enroll %}
+    <div class="flash warn">İlk girişiniz: bir kimlik doğrulayıcı uygulama (Google Authenticator,
+      Aegis, 1Password, Microsoft Authenticator…) kaydetmeniz gerekiyor. Bu adım zorunludur.</div>
+    <p>Uygulamada "kurulum anahtarı ile ekle" seçeneğini kullanın ve şu anahtarı girin:</p>
+    <p class="code">{{ enroll }}</p>
+    <p class="muted">Veya bu bağlantıyı destekleyen bir uygulamaya yapıştırın:</p>
+    <p class="mono">{{ uri }}</p>
+    <p class="muted">Bu anahtar yalnızca size gösterilir; sunucuda şifreli saklanır.</p>
+  {% endif %}
+  <label for="c">Uygulamadaki 6 haneli kod</label>
+  <input id="c" type="text" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+  <button>{% if enroll %}Kaydet ve giriş yap{% else %}Giriş{% endif %}</button>
+</form>
+{% endblock %}

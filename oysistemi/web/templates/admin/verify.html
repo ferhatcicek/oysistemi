@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Bütünlük kontrolü{% endblock %}
+{% block content %}
+<h1>Bütünlük kontrolü</h1>
+{% if critical %}
+<div class="flash bad"><strong>{{ critical }} kritik bulgu.</strong> Veritabanına uygulama dışından
+  müdahale edilmiş olabilir. Sistemi kullanmayı durdurun, DB ve checkpoint dosyasının
+  kopyasını alın ve bulguları inceleyin.</div>
+{% elif findings %}
+<div class="flash warn">Kritik bulgu yok; aşağıdaki uyarıları inceleyin.</div>
+{% else %}
+<div class="flash ok">Tüm kontroller temiz: şema, denetim zinciri, satır imzaları, gölge log,
+  checkpoint'ler ve oylama değişmezleri doğrulandı.</div>
+{% endif %}
+
+{% if findings %}
+<div class="card">
+  <table>
+    <tr><th>Seviye</th><th>Kontrol</th><th>Ayrıntı</th></tr>
+    {% for f in findings %}
+    <tr><td>{{ 'KRİTİK' if f.severity == 'critical' else 'uyarı' }}</td><td class="mono">{{ f.code }}</td><td>{{ f.detail }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Yapılan kontroller</h2>
+  <ul>
+    <li>Şema ve tetikleyiciler beklenenle aynı mı</li>
+    <li>Denetim kaydı hash zinciri ve imzaları sağlam mı</li>
+    <li>Her seçmen, yönetici, oylama ve liste satırının imzası (row MAC) geçerli mi</li>
+    <li>Gölge logdaki her değişikliğin karşılığında denetim kaydı var mı (bant dışı değişiklik)</li>
+    <li>DB dışındaki checkpoint dosyası mevcut durumla tutarlı mı (silinen satır)</li>
+    <li>Oy sayısı ≤ oy hakkı ≤ seçmen sayısı; liste mühürü; her oyun kör imzası geçerli mi</li>
+  </ul>
+  <form method="post" action="/admin/checkpoint">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="secondary">Şimdi checkpoint al</button>
+  </form>
+</div>
+{% endblock %}

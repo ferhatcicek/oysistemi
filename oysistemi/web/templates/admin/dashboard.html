@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Yönetici panosu{% endblock %}
+{% macro payload_view(r) %}
+  {% set p = r.payload_obj %}
+  {% if r.kind == 'voters_add' %}
+    {{ p.voters|length }} seçmen:
+    <span class="muted">{% for v in p.voters %}{{ v.id }} ({{ v.display_name }}{% if v.email %}, {{ v.email }}{% endif %}){% if not loop.last %}; {% endif %}{% endfor %}</span>
+  {% elif r.kind in ('roll_add', 'roll_remove') %}
+    <strong>{{ p.election_id }}</strong>: {{ p.voter_ids|join(', ') }}
+  {% elif r.kind == 'admin_add' %}
+    {{ p.username }} ({{ p.role }})
+  {% elif p.election_id %}
+    <strong>{{ p.election_id }}</strong>
+  {% else %}
+    {{ p.id }}{% if p.display_name %} — {{ p.display_name }}{% endif %}
+  {% endif %}
+{% endmacro %}
+{% block content %}
+<h1>Pano</h1>
+
+<div class="card">
+  <h2>Onay bekleyen öneriler</h2>
+  <p class="muted">Kritik değişiklikler iki kişi kuralıyla uygulanır: öneren kişi kendi önerisini onaylayamaz.</p>
+  {% if not pending %}<p class="muted">Bekleyen öneri yok.</p>{% else %}
+  <table>
+    <tr><th>İşlem</th><th>Ayrıntı</th><th>Öneren</th><th></th></tr>
+    {% for r in pending %}
+    <tr>
+      <td>{{ kinds[r.kind] }}</td>
+      <td>{{ payload_view(r) }}</td>
+      <td>{{ r.proposer }}<br><span class="muted">{{ r.created_at }}</span></td>
+      <td>
+        {% if r.proposed_by == admin.id %}<span class="muted">Sizin öneriniz — başka bir yönetici onaylamalı</span>
+        {% elif r.decided_by_me %}<span class="muted">Kararınız kaydedildi</span>
+        {% elif admin.role != 'admin' %}<span class="muted">Denetçi: salt okunur</span>
+        {% else %}
+        <form method="post" action="/admin/requests/{{ r.id }}" class="inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <button name="decision" value="approve">Onayla</button>
+          <button name="decision" value="reject" class="secondary">Reddet</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Oylamalar</h2>
+  {% if not elections %}<p class="muted">Henüz oylama yok. <a href="/admin/elections/new">Yeni oylama oluşturun.</a></p>{% else %}
+  <table>
+    <tr><th>Oylama</th><th>Tür</th><th>Durum</th></tr>
+    {% for e in elections %}
+    <tr><td><a href="/admin/elections/{{ e.id }}">{{ e.title }}</a> <span class="muted mono">{{ e.id }}</span></td>
+        <td>{{ ballot_labels.get(e.ballot_type, e.ballot_type) }}</td>
+        <td><span class="badge {{ e.status }}">{{ {'draft':'Taslak','open':'Açık','closed':'Kapandı','tallied':'Sayıldı','archived':'Arşiv'}[e.status] }}</span></td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Son kararlar</h2>
+  {% if not recent %}<p class="muted">Henüz karar yok.</p>{% else %}
+  <table>
+    <tr><th>İşlem</th><th>Ayrıntı</th><th>Öneren</th><th>Karar verenler</th><th>Sonuç</th></tr>
+    {% for r in recent %}
+    <tr><td>{{ kinds[r.kind] }}</td><td>{{ payload_view(r) }}</td><td>{{ r.proposer }}</td>
+        <td>{{ r.deciders|join(', ') }}</td>
+        <td>{{ 'Uygulandı' if r.status == 'applied' else 'Reddedildi' }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ e.title }} — Sonuçlar{% endblock %}
+{% block content %}
+<h1>{{ e.title }} — Sonuçlar</h1>
+<div class="grid">
+  <div class="card"><div class="muted">Seçmen sayısı</div><div class="stat">{{ result.eligible }}</div></div>
+  <div class="card"><div class="muted">Kullanılan oy</div><div class="stat">{{ result.turnout }}</div></div>
+  <div class="card"><div class="muted">Katılım</div><div class="stat">
+    {{ ((result.turnout / result.eligible * 100) if result.eligible else 0)|round(1) }}%</div></div>
+</div>
+
+{% if result.rejected_ballots %}
+<div class="flash bad">{{ result.rejected_ballots }} geçersiz imzalı pusula sayıma alınmadı.</div>
+{% endif %}
+
+<div class="card">
+{% if result.withheld %}
+  <p>Katılım, gizliliği korumak için belirlenen asgari sayının
+     ({{ board.config.min_turnout }}) altında kaldığından döküm yayımlanmıyor.</p>
+{% else %}
+  {% set t = result.tally %}
+  {% if t.counts is defined %}
+    {% set total = t.counts.values()|sum %}
+    <table>
+      <tr><th>Seçenek</th><th>Oy</th><th class="barcol"></th></tr>
+      {% for o, c in t.counts|dictsort(by='value', reverse=true) %}
+      <tr><td>{{ o }}{% if t.winners is defined and o in t.winners %} 🏆{% endif %}</td><td>{{ c }}</td>
+          <td><meter min="0" max="{{ total or 1 }}" value="{{ c }}"></meter></td></tr>
+      {% endfor %}
+      {% if t.blank %}<tr><td class="muted">Boş oy</td><td>{{ t.blank }}</td><td></td></tr>{% endif %}
+    </table>
+  {% elif t.points is defined %}
+    <table>
+      <tr><th>Seçenek</th><th>Borda puanı</th></tr>
+      {% for o in t.ranking %}<tr><td>{{ o }}{% if o in t.winners %} 🏆{% endif %}</td><td>{{ t.points[o] }}</td></tr>{% endfor %}
+    </table>
+  {% elif t.rounds is defined %}
+    <p><strong>Kazanan:</strong> {{ t.winner or 'belirlenemedi' }}</p>
+    {% for r in t.rounds %}
+      <h2>{{ loop.index }}. tur</h2>
+      <table>{% for o, c in r|dictsort(by='value', reverse=true) %}<tr><td>{{ o }}</td><td>{{ c }}</td></tr>{% endfor %}</table>
+    {% endfor %}
+    {% if t.eliminated %}<p class="muted">Elenme sırası: {{ t.eliminated|join(' → ') }}</p>{% endif %}
+  {% endif %}
+{% endif %}
+</div>
+
+<p class="muted">Sayım zamanı: {{ result.tallied_at|localtime }} ({{ tzname }}) ·
+  zaman güvencesi: {% if result.time_assurance == 'ntp' %}birden çok bağımsız zaman sunucusuyla doğrulandı{% else %}<strong>yalnızca sunucu saati</strong>{% endif %}</p>
+
+<div class="card">
+  <h2>Oyum sayıldı mı?</h2>
+  <p class="muted">Makbuz numaranızı girin. Kontrol tamamen tarayıcınızda yapılır; hangi makbuzu
+     sorguladığınız sunucuya gönderilmez.</p>
+  <input type="text" id="receipt-input" class="mono" placeholder="makbuz numarası">
+  <button id="receipt-check" type="button" data-election="{{ e.id }}">Kontrol et</button>
+  <p id="receipt-result"></p>
+  <p class="muted">Herkes yeniden sayım yapabilir: <a href="/api/e/{{ e.id }}/bulletin.json">ilan panosu (JSON)</a> ·
+     yapılandırma özeti <span class="mono">{{ board.config_hash[:16] }}…</span> ·
+     seçmen listesi mühürü <span class="mono">{{ board.roll_hash[:16] }}…</span></p>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/results.js"></script>{% endblock %}

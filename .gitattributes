@@ -1,0 +1,15 @@
+# Varsayılan: metin dosyaları depoda LF
+* text=auto eol=lf
+
+# Windows PowerShell 5.1 betikleri CRLF + UTF-8 BOM ile çalışır (BOM'suz Türkçe karakter bozulur)
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Lisans metnini olduğu gibi koru
+LICENSE text eol=lf
+
+# İkili dosyalar
+*.png binary
+*.ico binary
+*.oysbak binary
