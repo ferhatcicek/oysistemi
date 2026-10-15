@@ -121,6 +121,8 @@ def test_full_election_over_http(web):
     post(ayse, "/admin/elections/baskan/roll", {"voter": ["1001", "1002", "1003"]})
     approve_all(ctx, mehmet)
     post(ayse, "/admin/elections/baskan/open")
+    dash = mehmet.get("/admin").text  # onaylayan neyi onayladığını görür
+    assert "Başkan seçimi" in dash and "Zeynep, Osman" in dash and "3 seçmen" in dash
     approve_all(ctx, mehmet)
     assert "Açık" in ayse.get("/admin/elections/baskan").text
 

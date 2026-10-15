@@ -90,11 +90,46 @@ def update_election(ctx: Context, admin_id: str, election_id: str, *, title: str
     checkpoint.take(ctx.conn, ctx.keys.checkpoint, ctx.settings.checkpoint_path)
 
 
-def apply_open(ctx: Context, election_id: str) -> None:
-    """İşlem İÇİNDE, governance tarafından çağrılır. Yapılandırma ve listeyi mühürler."""
+BINDING_KEYS = ("title", "ballot_type", "config_hash", "roll_hash")
+
+
+def open_binding(ctx: Context, election_id: str) -> dict[str, Any]:
+    """Açılış önerisinin ONAYLANAN içeriği: başlık, oy türü, yapılandırma ve liste özetleri.
+
+    Öneri anında sunucu tarafından hesaplanır ve öneriye yazılır; uygulama anında yeniden
+    hesaplanıp karşılaştırılır. Böylece öneren, onaylayan incelerken taslağı değiştirip
+    onaylanmamış bir yapılandırmayı mühürletemez (TOCTOU).
+    """
     e = get_election(ctx, election_id)
     if e["status"] != "draft":
         raise ElectionStateError("election is not in draft")
+    cfg = json.loads(e["config"])
+    roll = [r[0] for r in ctx.conn.execute(
+        "SELECT voter_id FROM election_voters WHERE election_id = ?", (election_id,))]
+    return {
+        "title": e["title"], "ballot_type": e["ballot_type"],
+        "config_hash": econfig.config_hash(e["ballot_type"], cfg), "roll_hash": roll_hash(roll),
+        # Onaylayan neyi onayladığını panoda görsün (katılım değil, liste büyüklüğü):
+        "summary": {"opens_at": cfg.get("opens_at"), "closes_at": cfg["closes_at"],
+                    "options": ballot_types.get(e["ballot_type"]).options(cfg["ballot"]),
+                    "min_turnout": cfg["min_turnout"], "auth_methods": cfg["auth_methods"],
+                    "voters": len(roll)},
+    }
+
+
+def apply_open(ctx: Context, election_id: str, approved: dict[str, Any]) -> None:
+    """İşlem İÇİNDE, governance tarafından çağrılır. Yapılandırma ve listeyi mühürler.
+
+    `approved`: öneri anında hesaplanan bağlama (open_binding). Şu anki içerik ondan farklıysa
+    açılış reddedilir; onaylanmamış bir yapılandırma asla mühürlenmez.
+    """
+    current = open_binding(ctx, election_id)
+    changed = [k for k in BINDING_KEYS if approved.get(k) != current[k]]
+    if changed:
+        raise ElectionStateError(
+            "election was modified after the open proposal (" + ", ".join(changed)
+            + "); the approved content no longer matches — propose opening again")
+    e = get_election(ctx, election_id)
     cfg = json.loads(e["config"])
     econfig.normalize(e["ballot_type"], cfg)  # şemaya hâlâ uygun mu?
     roll = [r["voter_id"] for r in ctx.conn.execute(

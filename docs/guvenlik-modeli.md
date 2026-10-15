@@ -53,6 +53,11 @@ Böylece makbuz oyun sayıldığını kanıtlar ama içeriğini kanıtlamaz.
 `admin/governance.py`: kritik değişiklikler `change_requests` olarak önerilir ve öneren dışındaki
 `OYS_REQUIRED_APPROVALS` yöneticinin onayıyla, onayla **aynı işlemde** uygulanır.
 
+Açılış onayı **içeriğe bağlıdır**. Öneri anında sunucu başlığı, oy türünü, yapılandırma özetini
+(`config_hash`) ve seçmen listesi özetini (`roll_hash`) öneriye kendisi yazar. Uygulama anında bu
+değerleri yeniden hesaplayıp karşılaştırır. Böylece öneren, onaylayan incelerken taslağı
+değiştirip onaylanmamış bir yapılandırmayı mühürletemez (TOCTOU).
+
 ### Veritabanı düzeyi korumalar (H4)
 
 `db/schema.sql`:

@@ -11,6 +11,11 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
   kaydederek tek başına iki yönetici hesabını kontrol edebilirdi. Artık hesap iki parçalı bir
   kayıt belirteciyle (A: önerene, B: onaylayana) yeni yöneticinin kendisi tarafından
   etkinleştirilir; etkinleştirilmemiş hesap giriş yapamaz.
+- **Açılış onayı içeriğe bağlandı (TOCTOU).** Önceden öneren, onaylayan incelerken taslağı
+  (bitiş, seçenekler, asgari katılım) ya da listeyi değiştirebilir ve onaylanmamış bir
+  yapılandırmayı mühürletebilirdi. Artık öneri anındaki yapılandırma ve liste özetleri öneriye
+  yazılır ve uygulamada karşılaştırılır; fark varsa açılış reddedilir. Pano, onaylanan içeriği
+  gösterir.
 
 ## [0.1.0] - 2026-10-15
 

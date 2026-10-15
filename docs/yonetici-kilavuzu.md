@@ -63,7 +63,12 @@ basın. İkinci bir yönetici onaylar.
 
 ### 4. Açılışı önerin
 
-**Açılışı öner** düğmesine basın; ikinci bir yönetici onaylar. Onay anında:
+**Açılışı öner** düğmesine basın; ikinci bir yönetici onaylar. Onaylayan yönetici panoda
+başlığı, oy türünü, seçenekleri, tarihleri, asgari katılımı ve seçmen sayısını görür. **Onay
+yalnızca bu içerik için geçerlidir:** öneriden sonra taslakta ya da seçmen listesinde herhangi
+bir değişiklik yapılırsa açılış reddedilir ve yeniden önerilmesi gerekir.
+
+Onay anında:
 
 - seçime özel kör imza anahtarı üretilir,
 - yapılandırma ve seçmen listesinin özetleri ("mühürler") kaydedilir,

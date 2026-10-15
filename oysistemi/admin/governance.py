@@ -122,7 +122,7 @@ def _admin_add(ctx: Context, p: dict[str, Any]) -> None:
 
 
 def _election_open(ctx: Context, p: dict[str, Any]) -> None:
-    elections.apply_open(ctx, p["election_id"])
+    elections.apply_open(ctx, p["election_id"], p)
 
 
 def _election_close(ctx: Context, p: dict[str, Any]) -> None:
@@ -199,6 +199,10 @@ def propose(ctx: Context, admin_id: str, kind: str, payload: dict[str, Any]) -> 
     if kind not in HANDLERS:
         raise GovernanceError(f"unknown change kind: {kind}")
     _validate(kind, payload)
+    if kind == "election_open":
+        # Onay belirli bir içeriğe bağlanır; bağlamayı istemci değil sunucu hesaplar.
+        payload = {"election_id": payload["election_id"],
+                   **elections.open_binding(ctx, payload["election_id"])}
     request_id = secrets.token_hex(8)
     with transaction(ctx.conn):
         require_admin(ctx, admin_id)

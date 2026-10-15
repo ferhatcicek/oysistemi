@@ -9,6 +9,15 @@
     <strong>{{ p.election_id }}</strong>: {{ p.voter_ids|join(', ') }}
   {% elif r.kind == 'admin_add' %}
     {{ p.username }} ({{ p.role }})
+  {% elif r.kind == 'election_open' and p.summary %}
+    <strong>{{ p.title }}</strong> <span class="mono muted">{{ p.election_id }}</span><br>
+    {{ ballot_labels.get(p.ballot_type, p.ballot_type) }} · {{ p.summary.voters }} seçmen ·
+    bitiş {{ p.summary.closes_at|localtime }}{% if p.summary.opens_at %} · başlangıç {{ p.summary.opens_at|localtime }}{% endif %}
+    · asgari katılım {{ p.summary.min_turnout }}<br>
+    <span class="muted">Seçenekler: {{ p.summary.options|join(', ') }}</span><br>
+    <span class="muted mono">yapılandırma {{ p.config_hash[:12] }}… · liste {{ p.roll_hash[:12] }}…</span><br>
+    <span class="muted">Onayınız yalnızca bu içerik için geçerlidir; öneriden sonra değişiklik
+      yapılırsa açılış reddedilir.</span>
   {% elif p.election_id %}
     <strong>{{ p.election_id }}</strong>
   {% else %}

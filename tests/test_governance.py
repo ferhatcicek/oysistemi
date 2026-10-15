@@ -74,3 +74,42 @@ def test_enrollment_code_expires_by_trusted_clock(ctx, clock):
     clock.advance(8 * 86400)
     with pytest.raises(enrollment.EnrollmentError, match="expired"):
         enrollment.complete(ctx, "z", part_a, part_b, "yeterince-uzun-parola")
+
+
+def _draft_with_roll(ctx):
+    for v in ("v1", "v2", "v3"):
+        approve(ctx, "voter_add", {"id": v, "display_name": v})
+    service.create_election(ctx, "a1", "e5", "Başkan", "single",
+                            {"ballot": {"options": ["Ali", "Veli"]}, "min_turnout": 2,
+                             "closes_at": at(3600)})
+    approve(ctx, "roll_add", {"election_id": "e5", "voter_ids": ["v1", "v2"]})
+
+
+def test_config_changed_after_open_proposal_is_not_sealed(ctx):
+    """Regresyon (güvenlik incelemesi): onaydan önce taslak değişirse açılış reddedilir."""
+    _draft_with_roll(ctx)
+    rid = gov.propose(ctx, "a1", "election_open", {"election_id": "e5"})
+    # Öneren, onaydan önce bitişi uzatıp seçeneği değiştiriyor
+    service.update_election(ctx, "a1", "e5", cfg={"ballot": {"options": ["Ali", "Hile"]},
+                                                  "min_turnout": 2, "closes_at": at(99999)})
+    with pytest.raises(service.ElectionStateError, match="modified after the open proposal"):
+        gov.decide(ctx, "a2", rid, "approve")
+    assert service.get_election(ctx, "e5")["status"] == "draft"
+
+
+def test_roll_changed_after_open_proposal_is_not_sealed(ctx):
+    _draft_with_roll(ctx)
+    rid = gov.propose(ctx, "a1", "election_open", {"election_id": "e5"})
+    approve(ctx, "roll_add", {"election_id": "e5", "voter_ids": ["v3"]}, proposer="a2",
+            approver="a1")
+    with pytest.raises(service.ElectionStateError, match="roll_hash"):
+        gov.decide(ctx, "a2", rid, "approve")
+
+
+def test_client_cannot_forge_open_binding(ctx):
+    """Bağlama sunucuda hesaplanır; istemcinin gönderdiği özet yok sayılır."""
+    _draft_with_roll(ctx)
+    rid = gov.propose(ctx, "a1", "election_open",
+                      {"election_id": "e5", "config_hash": "0" * 64, "roll_hash": "0" * 64})
+    assert gov.decide(ctx, "a2", rid, "approve") == "applied"
+    assert service.get_election(ctx, "e5")["status"] == "open"
