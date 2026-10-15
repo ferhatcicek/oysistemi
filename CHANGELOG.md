@@ -17,6 +17,11 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
   yazılır ve uygulamada karşılaştırılır; fark varsa açılış reddedilir. Pano, onaylanan içeriği
   gösterir.
 
+### Düzeltilenler
+- Windows: Program PowerShell 7 (pwsh) içinden başlatıldığında izin denetimi
+  (`verify`/`harden`) Windows PowerShell 5.1'in `Get-Acl` modülünü yükleyemiyor ve yanlış
+  "kritik bulgu" veriyordu. `PSModulePath` artık alt sürece aktarılmıyor.
+
 ## [0.1.0] - 2026-10-15
 
 İlk yayım.
@@ -57,5 +62,5 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) esas alır; s
 - PowerShell kurulum, başlatma ve Zamanlanmış Görev betikleri.
 - `tzdata` bağımlılığı, konsol kodlaması ve SQLite kilit dayanıklılığı düzeltmeleri.
 
-[Yayımlanmamış]: ../../compare/v0.1.0...HEAD
-[0.1.0]: ../../releases/tag/v0.1.0
+[Yayımlanmamış]: https://github.com/ferhatcicek/oysistemi/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ferhatcicek/oysistemi/releases/tag/v0.1.0

@@ -7,7 +7,7 @@ Debian 12 / Ubuntu 22.04+ için örnek. Diğer dağıtımlarda paket adları de�
 ```bash
 sudo apt install python3 python3-venv git
 sudo useradd --system --create-home --home-dir /srv/oysistemi --shell /usr/sbin/nologin oysistemi
-sudo -u oysistemi git clone <depo-adresi> /srv/oysistemi/kod
+sudo -u oysistemi git clone https://github.com/ferhatcicek/oysistemi.git /srv/oysistemi/kod
 cd /srv/oysistemi/kod
 sudo -u oysistemi python3 -m venv .venv
 sudo -u oysistemi .venv/bin/pip install -e .

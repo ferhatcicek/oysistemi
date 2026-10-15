@@ -1,6 +1,7 @@
 # OySistemi
 
 [![Lisans: AGPL-3.0](https://img.shields.io/badge/lisans-AGPL--3.0-blue.svg)](LICENSE)
+[![CI](https://github.com/ferhatcicek/oysistemi/actions/workflows/ci.yml/badge.svg)](https://github.com/ferhatcicek/oysistemi/actions/workflows/ci.yml)
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)
 ![Windows | Linux](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey.svg)
 
@@ -39,7 +40,7 @@ yazılmıştır, Windows'ta ek yazılım gerektirmeden çalışır.
 ### Windows (önerilen)
 
 ```powershell
-git clone <depo-adresi> oysistemi
+git clone https://github.com/ferhatcicek/oysistemi.git oysistemi
 cd oysistemi
 powershell -ExecutionPolicy Bypass -File scripts\windows\kurulum.ps1 -VeriKlasoru C:\OySistemi
 powershell -ExecutionPolicy Bypass -File scripts\windows\baslat.ps1 -VeriKlasoru C:\OySistemi -YerelTest
@@ -105,5 +106,6 @@ Bu program özgür yazılımdır: [GNU Affero Genel Kamu Lisansı](LICENSE) sür
 göre) daha sonraki bir sürümü kapsamında dağıtabilir ve/veya değiştirebilirsiniz.
 
 AGPL gereği, değiştirilmiş bir sürümü ağ üzerinden kullanıcılara sunuyorsanız onlara kaynak
-koduna erişim sağlamalısınız. `OYS_SOURCE_URL` ayarlanırsa her sayfanın altında bir "Kaynak
+koduna erişim sağlamalısınız. `OYS_SOURCE_URL` ayarlanırsa (ör.
+`https://github.com/ferhatcicek/oysistemi`) her sayfanın altında bir "Kaynak
 kodu" bağlantısı gösterilir.

@@ -107,11 +107,15 @@ def check(paths: list[Path]) -> list[str]:
             allowed = {current_user_sid(), SYSTEM_SID, ADMINISTRATORS_SID, CREATOR_OWNER_SID}
             # Yollar ortam değişkeniyle aktarılır: -Command'a ek argüman verilirse PowerShell
             # onları komut metninin parçası sanar.
+            # PSModulePath çıkarılır: süreç PowerShell 7 (pwsh) içinden başlatıldıysa bu
+            # değişken PS7 modül yollarını taşır ve Windows PowerShell 5.1 Get-Acl'i
+            # (Microsoft.PowerShell.Security) yükleyemez.
+            env = {k: v for k, v in os.environ.items() if k.upper() != "PSMODULEPATH"}
+            env["OYS_ACL_PATHS"] = "\n".join(str(p.resolve()) for p in paths)
             res = subprocess.run(
                 [_sys32(r"WindowsPowerShell\v1.0\powershell.exe"), "-NoProfile",
                  "-NonInteractive", "-Command", _PS], capture_output=True, timeout=60,
-                env={**os.environ, "OYS_ACL_PATHS": "\n".join(str(p.resolve()) for p in paths)},
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                env=env, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         except (OSError, subprocess.TimeoutExpired) as exc:
             return [f"cannot read permissions: {exc}"]
         if res.returncode != 0:

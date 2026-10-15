@@ -3,7 +3,7 @@
 ## Ortam
 
 ```bash
-git clone <depo-adresi> oysistemi && cd oysistemi
+git clone https://github.com/ferhatcicek/oysistemi.git oysistemi && cd oysistemi
 python -m venv .venv
 # Windows: .venv\Scripts\activate    Linux: source .venv/bin/activate
 python -m pip install -e ".[dev]"

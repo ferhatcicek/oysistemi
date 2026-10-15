@@ -23,7 +23,7 @@ hangi hesap çalıştıracaksa kurulumu o hesapla yapın. Ayrı bir yerel hesap 
 Seçtiğiniz hesapla, normal (yönetici olmayan) bir PowerShell penceresinde:
 
 ```powershell
-git clone <depo-adresi> C:\OySistemiKod
+git clone https://github.com/ferhatcicek/oysistemi.git C:\OySistemiKod
 cd C:\OySistemiKod
 powershell -ExecutionPolicy Bypass -File scripts\windows\kurulum.ps1 -VeriKlasoru C:\OySistemi
 ```
