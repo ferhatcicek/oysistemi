@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
-      - uses: actions/setup-node@v4  # blindsig.js ↔ Python çapraz testleri için
+      - uses: actions/setup-node@v7  # blindsig.js ↔ Python çapraz testleri için
         with:
           node-version: "20"
       - name: Bağımlılıklar
