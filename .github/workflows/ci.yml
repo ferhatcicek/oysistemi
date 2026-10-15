@@ -24,7 +24,7 @@ jobs:
         python: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # Kullanıcı bilgisayarlarında görülen durum: free-threaded (GIL'siz) 3.13t kurulu.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         id: ft
         with:
           python-version: "3.13t"
@@ -56,7 +56,7 @@ jobs:
             -YoneticiKurulumunuAtla
           if ($LASTEXITCODE -ne 1) { Write-Error "free-threaded Python reddedilmedi"; exit 1 }
           exit 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: kurulum.ps1 uçtan uca
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
